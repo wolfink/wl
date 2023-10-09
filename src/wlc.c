@@ -5,18 +5,30 @@
 
 int main(int argc, char** argv)
 {
+  Arena* a = arena_create();
+
   if (argc < 2) {
     printf("Usage: wlc <filename>\n");
     return -1;
   }
 
-  String* str = string_create("Hello,");
-  String* les = string_create(" world!\n");
-  string_cat(str, les);
+  string* str = u_strnew(a, "Hello,");
+  string* les = u_strnew(a, " world!\n");
+  str = u_strcat(a, str, les);
+  str = u_strcat(a, str, str);
+  str = u_strcat(a, str, str);
+  str = u_strcat(a, str, str);
+  str = u_strcat(a, str, str);
+  str = u_strcat(a, str, str);
+  str = u_strcat(a, str, str);
+  str = u_strcat(a, str, str);
+  str = u_strcat(a, str, str);
+
   if (str == NULL) return 1;
-  for(int i = 0; i < string_len(str); i++)
-  {
-    putchar(string_get(str, i));
-  }
+  u_prints(str);
+  printf("Arena size: %lu\n", arena_get_size(a));
+  printf("Arena location: %lu\n", arena_get_loc(a));
+
+  arena_free(a);
   return 0;
 }

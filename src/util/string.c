@@ -3,83 +3,72 @@
 #include <memory.h>
 #include <stdio.h>
 #include <string.h>
+#define STR_SIZE(str) *(size_t*) (str - sizeof(str))
 
-String* string_create(const char* in)
+char* u_strnew(Arena* a, const char* in)
 {
   size_t len = strlen(in);
-  String* ret = (String*) malloc(sizeof(String));
-  if (ret == NULL) return ret;
-  ret->val = (char*) malloc(sizeof(char) * len);
-  memcpy(ret->val, in, len);
-  ret->len = len;
+  size_t* size = arena_alloc(a, sizeof(size_t) + len);
+  char* ret = (char*) (size + 1);
+  memcpy(ret, in, len);
+  *size = len;
   return ret;
 }
 
-int string_copy(String* dest, const String* src)
+int u_strcpy(Arena* a, char* restrict dest, const char* restrict src)
 {
-  if (dest != NULL) free(dest);
+  if (!dest) dest = arena_alloc(a, sizeof(size_t) + STR_SIZE(src));
 
-  dest = string_create("");
-  if (dest == NULL) return 1;
+  memcpy(dest, src, STR_SIZE(src));
 
-  for (int i = 0; i < src->len; i++) string_addc(dest, src->val[i]);
+
   return 0;
 }
 
-int string_addc(String* str, char c)
+char u_getc(const char* str, size_t index)
 {
-  char* new_char_arr = (char*) realloc(str->val, sizeof(char) * ++str->len);
-  if (new_char_arr == NULL) return 1;
-  new_char_arr[str->len - 1] = c;
-  return 0;
+  if (index >= STR_SIZE(str)) return '\0';
+  return str[index];
 }
 
-char string_get(const String* str, size_t index)
+size_t u_strlen(const char* str)
 {
-  return str->val[index];
+  return STR_SIZE(str);
 }
 
-size_t string_len(const String* str)
+char* u_strcat(Arena* arena, const char* restrict a, const char* restrict b)
 {
-  return str->len;
+  const size_t new_len = STR_SIZE(a) + STR_SIZE(b);
+  size_t* size = arena_alloc(arena, sizeof(size_t) + new_len);
+  char* ret = (char*)(size + 1);
+
+  if (!ret) return NULL;
+
+  memcpy(ret, a, STR_SIZE(a));
+  memcpy(ret + STR_SIZE(a), b, STR_SIZE(b));
+  *size = new_len;
+
+  return ret;
 }
 
-String* string_combine(const String* a, const String* b)
+int u_strcmp(const char* a, const char* b)
 {
-  String *new_string;
-  string_copy(new_string, a);
-  string_cat(new_string, b);
-  return new_string;
-}
+  const size_t alen = STR_SIZE(a);
+  const size_t blen = STR_SIZE(b);
 
-void string_cat(String* dest, const String* src)
-{
-  size_t new_len = src->len + dest->len;
-  dest->val = realloc(dest->val, sizeof(char) * new_len);
-  if (dest->val == NULL) return;
-  memcpy(dest->val + dest->len, src->val, src->len);
-  dest->len = new_len;
-}
+  if (alen < blen) return -b[alen];
+  if (alen > blen) return a[blen];
 
-void string_substr(String* str, size_t start, size_t len)
-{
-  str->val += start;
-  char* new_val = (char*) malloc(sizeof(char) * len);
-  memcpy(new_val, str->val, len);
-  free(str->val);
-  str->val = new_val;
-}
-
-int string_compare(const String* a, const String* b)
-{
-  if (a->len < b->len) return -b->val[a->len];
-  if (a->len > b->len) return a->val[b->len];
-
-  for(int i = 0; i < a->len && i < b->len; i++)
+  for(int i = 0; i < alen; i++)
   {
-    int str_diff = a->val[i] - b->val[i];
+    int str_diff = a[i] - b[i];
     if (str_diff != 0) return str_diff;
   }
 
   return 0;
+}
+
+void u_prints(const char* str)
+{
+  for(int i = 0; i < STR_SIZE(str); i++) putchar(str[i]);
 }

@@ -4,19 +4,26 @@
 #include<stdlib.h>
 
 #ifndef UTIL_INTERNAL_H
-typedef void String;
+typedef void Arena;
+typedef void string;
 #endif
 
-extern String* string_create(const char*);
-extern int     string_copy(String* dest, const String* src);
-extern char    string_get(const String*, size_t);
-extern size_t  string_len(const String*);
-extern String* string_combine(const String*, const String*);
-extern int     string_addc(String*, char);
-extern void    string_cat(String* dest, const String* src);
-extern void    string_substr(String*, size_t start, size_t len);
-extern int     string_compare(const String* a, const String* b);
-extern String* string_match(const String*, const String* matcher);
+#define ARENA_MAX_SIZE MB(1)
+
+extern Arena* arena_create();
+extern Arena* arena_create_init(size_t initial_size);
+extern size_t arena_get_size(Arena*);
+extern size_t arena_get_loc(Arena* a);
+extern void*  arena_alloc(Arena*, size_t bytes);
+extern void   arena_free(Arena*);
+
+extern string*  u_strnew(Arena*, const string*);
+extern int      u_strcpy(Arena*, string* restrict dest, const string* restrict src);
+extern char     u_getc(const string*, size_t index);
+extern size_t   u_strlen(const string*);
+extern string*  u_strcat(Arena*, const string* restrict dest, const string* restrict src);
+extern int      u_strcmp(const string* a, const string* b);
+extern void     u_prints(const string*);
 
 //extern TokenVector* token_vector_create();
 //extern void         token_vector_destroy(TokenVector*);
