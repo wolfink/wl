@@ -1,4 +1,5 @@
 #include "util.h"
+#include "lexer.h"
 #include<stdio.h>
 #include<stdlib.h>
 #include<err.h>
@@ -12,22 +13,10 @@ int main(int argc, char** argv)
     return -1;
   }
 
-  string* str = u_strnew(a, "Hello,");
-  string* les = u_strnew(a, " world!\n");
-  str = u_strcat(a, str, les);
-  str = u_strcat(a, str, str);
-  str = u_strcat(a, str, str);
-  str = u_strcat(a, str, str);
-  str = u_strcat(a, str, str);
-  str = u_strcat(a, str, str);
-  str = u_strcat(a, str, str);
-  str = u_strcat(a, str, str);
-  str = u_strcat(a, str, str);
-
-  if (str == NULL) return 1;
-  u_prints(str);
-  printf("Arena size: %lu\n", arena_get_size(a));
-  printf("Arena location: %lu\n", arena_get_loc(a));
+  string* in = u_strnew(a, "let x: int = 1000; let y: float = 2000; let z:(x: int, y: float)=>(ret: int);");
+  string* out = lexer_analyze(a, in);
+  u_prints(out);
+  printf("\n");
 
   arena_free(a);
   return 0;

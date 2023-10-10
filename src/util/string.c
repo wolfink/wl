@@ -3,44 +3,58 @@
 #include <memory.h>
 #include <stdio.h>
 #include <string.h>
-#define STR_SIZE(str) *(size_t*) (str - sizeof(str))
 
-char* u_strnew(Arena* a, const char* in)
+string* u_strnew(Arena* a, const string* in)
 {
   size_t len = strlen(in);
   size_t* size = arena_alloc(a, sizeof(size_t) + len);
-  char* ret = (char*) (size + 1);
+  string* ret = STR_PTR(size);
   memcpy(ret, in, len);
   *size = len;
   return ret;
 }
 
-int u_strcpy(Arena* a, char* restrict dest, const char* restrict src)
+int u_strcpy(Arena* a, string* dest, const string* src)
 {
-  if (!dest) dest = arena_alloc(a, sizeof(size_t) + STR_SIZE(src));
+  size_t* size = 0;
+  if (!dest) size = arena_alloc(a, sizeof(size_t) + STR_SIZE(src));
+  if(!size) return 1;
+  dest = STR_PTR(size);
 
   memcpy(dest, src, STR_SIZE(src));
-
+  *size = STR_SIZE(src);
 
   return 0;
 }
 
-char u_getc(const char* str, size_t index)
+string* u_strcpyar(Arena* a, const string* src)
+{
+  size_t* size = arena_alloc(a, sizeof(size_t) + STR_SIZE(src));
+  if(!size) return NULL;
+  string* dest = STR_PTR(size);
+
+  memcpy(dest, src, STR_SIZE(src));
+  *size = STR_SIZE(src);
+
+  return dest;
+}
+
+char u_getc(const string* str, size_t index)
 {
   if (index >= STR_SIZE(str)) return '\0';
   return str[index];
 }
 
-size_t u_strlen(const char* str)
+size_t u_strlen(const string* str)
 {
   return STR_SIZE(str);
 }
 
-char* u_strcat(Arena* arena, const char* restrict a, const char* restrict b)
+string* u_strcat(Arena* arena, const string* restrict a, const string* restrict b)
 {
   const size_t new_len = STR_SIZE(a) + STR_SIZE(b);
   size_t* size = arena_alloc(arena, sizeof(size_t) + new_len);
-  char* ret = (char*)(size + 1);
+  string* ret = (string*)(size + 1);
 
   if (!ret) return NULL;
 
@@ -51,7 +65,7 @@ char* u_strcat(Arena* arena, const char* restrict a, const char* restrict b)
   return ret;
 }
 
-int u_strcmp(const char* a, const char* b)
+int u_strcmp(const string* a, const string* b)
 {
   const size_t alen = STR_SIZE(a);
   const size_t blen = STR_SIZE(b);
@@ -68,7 +82,9 @@ int u_strcmp(const char* a, const char* b)
   return 0;
 }
 
-void u_prints(const char* str)
+void u_prints(const string* str)
 {
-  for(int i = 0; i < STR_SIZE(str); i++) putchar(str[i]);
+  size_t len = STR_SIZE(str);
+  for(int i = 0; i < len; i++)
+    putchar(str[i]);
 }
