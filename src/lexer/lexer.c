@@ -6,50 +6,53 @@
 #define MAX_TOKEN_LEN KB(1) - 1
 #define LEXER_DEFAULT_SIZE KB(80)
 
+#define TokenTypeTableSimple \
+  X(SEMI,         ';', ";") \
+  X(LBRACE,       '{', "{")\
+  X(RBRACE,       '}', "}")\
+  X(LPAR,         '(', "(")\
+  X(RPAR,         ')', ")")\
+  X(PERIOD,       '.', ".")\
+  X(STAR,         '*', "*")\
+  X(PLUS,         '+', "+")\
+  X(CARAT,        '^', "^")\
+  X(AND,          '&', "&")\
+  X(COMMA,        ',', ",")\
+  X(TYPE_ASSIGN,  ':', ":")\
+
+#define TokenTypeTableOverload \
+  X(MINUS,        '-', "-")\
+  X(SMALLARROW,   '-', "->")\
+  X(ASSIGN,       '=', "=")\
+  X(BIGARROW,     '=', "=>")\
+  X(EQUALS,       '=', "==")\
+
+#define TokenTypeTableStmts \
+  X(NUMBER,      '\0', "num")\
+  X(ID,          '\0', "id")\
+
+#define TokenTypeTable \
+  TokenTypeTableSimple\
+  TokenTypeTableOverload\
+  TokenTypeTableStmts
+
 typedef enum {
-  TOKEN_SEMI = 1,
-  TOKEN_LBRACE,
-  TOKEN_RBRACE,
-  TOKEN_LPAR,
-  TOKEN_RPAR,
-  TOKEN_PERIOD,
-  TOKEN_STAR,
-  TOKEN_PLUS,
-  TOKEN_MINUS,
-  TOKEN_CARAT,
-  TOKEN_AND,
-  TOKEN_SMALLARROW,
-  TOKEN_BIGARROW,
-  TOKEN_COMMA,
-  TOKEN_ASSIGN,
-  TOKEN_TYPE_ASSIGN,
-  TOKEN_EQUALS,
-  TOKEN_NUMBER,
-  TOKEN_ID,
+#define X(name, first, str) TokenType_##name,
+  TokenTypeTable
+#undef X
+  TokenType_COUNT
 } TokenType;
 
-#define NUM_TOKEN_TYPES TOKEN_ID
+char token_type_first[TokenType_COUNT] = {
+#define X(name, first, str) first,
+  TokenTypeTable
+#undef X
+};
 
-char *token_type_str[NUM_TOKEN_TYPES] = {
-  ";",
-  "{",
-  "}",
-  "(",
-  ")",
-  ".",
-  "*",
-  "+",
-  "-",
-  "^",
-  "&",
-  "->",
-  "=>",
-  ",",
-  "=",
-  ":",
-  "==",
-  "num",
-  "id"
+char *token_type_str[TokenType_COUNT] = {
+#define X(name, first, str) str,
+  TokenTypeTable
+#undef X
 };
 
 typedef struct
@@ -100,9 +103,9 @@ int lexer_add_token(
   int pos = 0;
 
   worker = u_strnew(a, "(");
-  worker = u_strcat(a, worker, u_strnew(a, token_type_str[t-1]));
-  if (   t == TOKEN_ID
-      || t == TOKEN_NUMBER)
+  worker = u_strcat(a, worker, u_strnew(a, token_type_str[t]));
+  if (   t == TokenType_ID
+      || t == TokenType_NUMBER)
     worker = u_strcat(a, worker, u_strnew(a, ","));
   worker = u_strcat(a,
       (data) ? u_strcat(a, worker, data): worker,
@@ -133,57 +136,33 @@ string* lexer_analyze(Arena *context, string* in)
 
     switch(c)
     {
-      case ';':
-        lexer_add_token(a, lex, TOKEN_SEMI, NULL);
+#define X(name, first, str) \
+      case  first:\
+        lexer_add_token(a, lex, TokenType_##name, NULL);\
         break;
-      case '(':
-        lexer_add_token(a, lex, TOKEN_LPAR, NULL);
-        break;
-      case ')':
-        lexer_add_token(a, lex, TOKEN_RPAR, NULL);
-        break;
-      case '{':
-        lexer_add_token(a, lex, TOKEN_LBRACE, NULL);
-        break;
-      case '}':
-        lexer_add_token(a, lex, TOKEN_RBRACE, NULL);
-        break;
-      case '.':
-        lexer_add_token(a, lex, TOKEN_PERIOD, NULL);
-        break;
-      case '*':
-        lexer_add_token(a, lex, TOKEN_STAR, NULL);
-        break;
-      case ',':
-        lexer_add_token(a, lex, TOKEN_COMMA, NULL);
-        break;
-      case ':':
-        lexer_add_token(a, lex, TOKEN_TYPE_ASSIGN, NULL);
-        break;
-      case '+':
-        lexer_add_token(a, lex, TOKEN_PLUS, NULL);
-        break;
+      TokenTypeTableSimple
+#undef X
       case '-':
         if(u_getc(in, index + 1) == '>') {
-          lexer_add_token(a, lex, TOKEN_SMALLARROW, NULL);
+          lexer_add_token(a, lex, TokenType_SMALLARROW, NULL);
           index++;
         }
         else
-          lexer_add_token(a, lex, TOKEN_MINUS, NULL);
+          lexer_add_token(a, lex, TokenType_MINUS, NULL);
         break;
       case '=':
         switch(u_getc(in, index + 1))
         {
           case '=':
-            lexer_add_token(a, lex, TOKEN_EQUALS, NULL);
+            lexer_add_token(a, lex, TokenType_EQUALS, NULL);
             index++;
             break;
           case '>':
-            lexer_add_token(a, lex, TOKEN_BIGARROW, NULL);
+            lexer_add_token(a, lex, TokenType_BIGARROW, NULL);
             index++;
             break;
           default:
-            lexer_add_token(a, lex, TOKEN_ASSIGN, NULL);
+            lexer_add_token(a, lex, TokenType_ASSIGN, NULL);
         }
         break;
       default:
@@ -196,7 +175,7 @@ string* lexer_analyze(Arena *context, string* in)
           --index;
           temp[pos] = '\0';
           string* number = u_strnew(b, temp);
-          lexer_add_token(a, lex, TOKEN_NUMBER, number);
+          lexer_add_token(a, lex, TokenType_NUMBER, number);
         } else if (isalpha(c)) {
           size_t pos = 0;
           while(pos < MAX_TOKEN_LEN && index < u_strlen(in) && isalpha(c)) {
@@ -206,7 +185,7 @@ string* lexer_analyze(Arena *context, string* in)
           --index;
           temp[pos] = '\0';
           string* id = u_strnew(b, temp);
-          lexer_add_token(a, lex, TOKEN_ID, id);
+          lexer_add_token(a, lex, TokenType_ID, id);
         }
         break;
     };
