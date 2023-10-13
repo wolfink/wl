@@ -153,6 +153,11 @@ string* lexer_get_value_at_index(Arena* context, Lexer* lex, size_t index)
   }
 }
 
+TokenType lexer_get_token_type_at_index(Lexer* lex, size_t index)
+{
+  return lex->tokens[index];
+}
+
 size_t lexer_get_len(Lexer* lex)
 {
   return lex->len;
