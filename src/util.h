@@ -12,6 +12,7 @@ typedef void string;
 
 extern Arena* arena_create();
 extern Arena* arena_create_init(size_t initial_size);
+extern void   arena_set_static(Arena*, int);
 extern size_t arena_get_size(Arena*);
 extern size_t arena_get_used(Arena*);
 extern void*  arena_get_location(Arena*, size_t loc);
@@ -25,6 +26,7 @@ extern char     u_getc(const string*, size_t index);
 extern size_t   u_strlen(const string*);
 extern string*  u_strcat(Arena*, const string* restrict dest, const string* restrict src);
 extern int      u_strcmp(const string* a, const string* b);
+extern string*  u_strslice(Arena*, const string*, size_t start, size_t end);
 extern void     u_prints(const string*);
 
 //extern TokenVector* token_vector_create();

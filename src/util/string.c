@@ -82,6 +82,17 @@ int u_strcmp(const string* a, const string* b)
   return 0;
 }
 
+string* u_strslice(Arena* arena, const string* in, size_t start, size_t end)
+{
+  size_t len = end - start - 1;
+  len = (len > u_strlen(in) - start - 1) ? u_strlen(in) - start - 1: len;
+  size_t* size = arena_alloc(arena, sizeof(size_t) + len);
+  string* ret = STR_PTR(size);
+  memcpy(ret, in + start, len);
+  *size = len;
+  return ret;
+}
+
 void u_prints(const string* str)
 {
   size_t len = STR_SIZE(str);

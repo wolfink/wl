@@ -10,7 +10,7 @@
 typedef char string;
 
 typedef struct {
-  size_t location, size;
+  size_t location, size, flags;
   char* data;
 } Arena;
 

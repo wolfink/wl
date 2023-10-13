@@ -1,6 +1,8 @@
 #include "util_internal.h"
 #include "../util.h"
 
+#define STATIC 1
+
 Arena* arena_create()
 {
   return arena_create_init(DEFAULT_ARENA_SIZE);
@@ -13,6 +15,12 @@ Arena* arena_create_init(size_t initial_size)
   ret->location = 0;
   ret->data = malloc(initial_size);
   return ret;
+}
+
+void arena_set_static(Arena* a, int is_static)
+{
+  if (is_static) a->flags |= STATIC;
+  else           a->flags = (a->flags | STATIC) - STATIC;
 }
 
 size_t arena_get_size(Arena* a)
@@ -32,7 +40,7 @@ void* arena_get_location(Arena* a, size_t loc)
 
 void* arena_alloc(Arena* a, size_t bytes)
 {
-  if (a->location + bytes >= a->size) {
+  if (a->location + bytes >= a->size && (a->flags & STATIC) == 0) {
     a->data = realloc(a->data, a->size <<= 1);
     if (a->data == NULL) return NULL;
   }
