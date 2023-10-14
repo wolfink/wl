@@ -4,6 +4,7 @@ project(WolfinkLangCompiler C)
 set(WLC_VERSION "0.1.0")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_C_FLAGS_DEBUG "-ggdb -g3")
 
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 

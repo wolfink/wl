@@ -1,7 +1,8 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#include<stdlib.h>
+#include <stdlib.h>
+#include <ctype.h>
 
 #ifndef UTIL_INTERNAL_H
 typedef void Arena;
@@ -9,6 +10,18 @@ typedef void string;
 #endif
 
 #define ARENA_MAX_SIZE MB(1)
+
+typedef int (*CTypeFunction)(char);
+
+static inline int is_alpha(char c)  { return isalpha(c); }
+static inline int is_alnum(char c)  { return isalnum(c); }
+static inline int is_digit(char c)  { return isdigit(c); }
+static inline int is_binary(char c) { return (c == '0' || c == '1'); }
+static inline int is_octal(char c)  { return (c >= '0' && c < '8'); }
+static inline int is_xdigit(char c) 
+{ 
+  return isdigit(c) || (c >= 'A' && c < 'G') || (c >= 'a' && c < 'g'); 
+}
 
 extern Arena* arena_create();
 extern Arena* arena_create_init(size_t initial_size);
@@ -28,12 +41,5 @@ extern string*  u_strcat(Arena*, const string* restrict dest, const string* rest
 extern int      u_strcmp(const string* a, const string* b);
 extern string*  u_strslice(Arena*, const string*, size_t start, size_t end);
 extern void     u_prints(const string*);
-
-//extern TokenVector* token_vector_create();
-//extern void         token_vector_destroy(TokenVector*);
-//extern void         token_vector_push_back(TokenVector*, String*);
-//extern String*      token_vector_pop(TokenVector*);
-
-
 
 #endif

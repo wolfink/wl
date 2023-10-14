@@ -1,7 +1,9 @@
 #include "lexer_internal.h"
 #include "../lexer.h"
 #include "../defs.h"
+#include <ctype.h>
 #include <stdio.h>
+#include <wctype.h>
 
 Lexer* lexer_new(Arena* a)
 {
@@ -64,6 +66,33 @@ int lexer_add_token(
   return 0;
 }
 
+inline int lexer_add_string_token(Arena*, Lexer*, TokenType, CTypeFunction matcher, string* in, size_t start);
+
+int lexer_add_string_token(
+    Arena* context,
+    Lexer* lex,
+    TokenType t,
+    CTypeFunction matcher,
+    string* in,
+    size_t start)
+{
+    Arena* lcl = arena_create();
+    char temp[MAX_TOKEN_LEN];
+    size_t index = start;
+    size_t pos = 0;
+    char c = u_getc(in, index);
+    while(pos < MAX_TOKEN_LEN
+       && index < u_strlen(in)
+       && matcher(c)) {
+      temp[pos++] = c;
+      c = u_getc(in, ++index);
+    }
+    temp[pos] = '\0';
+    lexer_add_token(context, lex, t, u_strnew(lcl, temp));
+    arena_free(lcl);
+    return index - 1;
+}
+
 Lexer* lexer_create(Arena *context, string* in)
 {
   Arena *a = arena_create();
@@ -109,27 +138,23 @@ Lexer* lexer_create(Arena *context, string* in)
             lexer_add_token(context, lex, TokenType_ASSIGN, NULL);
         }
         break;
+      case '0':
+        switch(u_getc(in, index + 1))
+        {
+          case 'x': 
+            index = lexer_add_string_token(context, lex, TokenType_HEX, is_xdigit, in, index);
+            break;
+          case'0': case'1': case'2': case'3':
+          case'4': case'5': case'6': case'7':
+            index = lexer_add_string_token(context, lex, TokenType_OCTAL, is_octal, in, index);
+          case'b':
+            index = lexer_add_string_token(context, lex, TokenType_BINARY, is_binary, in, index);
+        }
       default:
         if (isdigit(c)) {
-          size_t pos = 0;
-          while (pos < MAX_TOKEN_LEN && index < u_strlen(in) && isdigit(c)) {
-            temp[pos++] = c;
-            c = u_getc(in, ++index);
-          }
-          --index;
-          temp[pos] = '\0';
-          string* number = u_strnew(b, temp);
-          lexer_add_token(context, lex, TokenType_NUMBER, number);
+          index = lexer_add_string_token(context, lex, TokenType_NUMBER, is_digit, in, index);
         } else if (isalpha(c)) {
-          size_t pos = 0;
-          while(pos < MAX_TOKEN_LEN && index < u_strlen(in) && isalpha(c)) {
-            temp[pos++] = c;
-            c = u_getc(in, ++index);
-          }
-          --index;
-          temp[pos] = '\0';
-          string* id = u_strnew(b, temp);
-          lexer_add_token(context, lex, TokenType_ID, id);
+          index = lexer_add_string_token(context, lex, TokenType_ID, is_alnum, in, index);
         }
         break;
     };
