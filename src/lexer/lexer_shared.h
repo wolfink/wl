@@ -1,26 +1,67 @@
 #define TokenTypeTableSimple \
-  X(SEMI,         ';', "SEMI") \
-  X(LBRACE,       '{', "LBRACE")\
-  X(RBRACE,       '}', "RBRACE")\
-  X(LPAR,         '(', "LPAR")\
-  X(RPAR,         ')', "RPAR")\
-  X(PERIOD,       '.', "PERIOD")\
-  X(STAR,         '*', "STAR")\
-  X(PLUS,         '+', "PLUS")\
   X(CARAT,        '^', "CARAT")\
-  X(AND,          '&', "AND")\
   X(COMMA,        ',', "COMMA")\
-  X(TYPE_ASSIGN,  ':', "COLON")\
+  X(LBRACE,       '{', "LBRACE")\
+  X(LPAR,         '(', "LPAR")\
+  X(PERIOD,       '.', "PERIOD")\
+  X(PLUS,         '+', "PLUS")\
+  X(RANGLE,       '>', "RANGLE")\
+  X(RBRACE,       '}', "RBRACE")\
+  X(RPAR,         ')', "RPAR")\
+  X(SEMI,         ';', "SEMI") \
+  X(STAR,         '*', "STAR")\
+
+#define TokenTypeTableMinus \
+  X(SMALLARROW,    '>', "S-ARROW")\
+
+#define TokenTypeTableAssign \
+  X(BIGARROW,      '>', "B-ARROW")\
+  X(EQUALS,        '=', "EQUALS")\
+
+#define TokenTypeTableAnd \
+  X(AND,           '&', "AND")\
+
+#define TokenTypeTableOr \
+  X(OR,            '|', "OR")\
+
+#define TokenTypeTableColon \
+  X(COLON_ASSIGN,  '=', "COLON-ASSIGN")\
+  X(DBL_COLON,     ':', "DBL-COLON")\
+
+#define TokenTypeTableAngle \
+  X(COLON_ARROW,   ':', "COLON-ARROW")\
+
+#define TokenTypeTableZero \
+  X(BINARY,       'b', "BINARY")\
+  X(HEX,          'x', "HEX")\
 
 #define TokenTypeTableOverload \
-  X(MINUS,        '-', "MINUS")\
-  X(SMALLARROW,   '-', "S-ARROW")\
   X(ASSIGN,       '=', "ASSIGN")\
-  X(BIGARROW,     '=', "B-ARROW")\
-  X(EQUALS,       '=', "EQUALS")\
-  X(HEX,          '0', "HEX")\
+  X(BW_AND,       '&', "BW-AND")\
+  X(BW_OR,        '|', "BW-OR")\
+  X(COLON,        ':', "COLON")\
+  X(LANGLE,       '<', "LANGLE")\
+  X(MINUS,        '-', "MINUS")\
   X(OCTAL,        '0', "OCTAL")\
-  X(BINARY,       '0', "BINARY")\
+  TokenTypeTableAssign \
+  TokenTypeTableAnd \
+  TokenTypeTableAngle \
+  TokenTypeTableColon \
+  TokenTypeTableMinus \
+  TokenTypeTableOr \
+  TokenTypeTableZero \
+
+#define TokenTypeTableKeyword \
+  X(BREAK,        'b', "BREAK")\
+  X(DO,           'd', "DO")\
+  X(ELSE,         'e', "ELSE")\
+  X(ENV,          'e', "ENV")\
+  X(FOR,          'f', "FOR")\
+  X(IF,           'i', "IF")\
+  X(INLINE,       'i', "INLINE")\
+  X(MUT,          'm', "MUT")\
+  X(SWITCH,       's', "SWITCH")\
+  X(WHILE,        'w', "WHILE")\
 
 #define TokenTypeTableStmts \
   X(NUMBER,      '\0', "NUMBER")\
@@ -30,6 +71,7 @@
 #define TokenTypeTable \
   TokenTypeTableSimple\
   TokenTypeTableOverload\
+  TokenTypeTableKeyword\
   TokenTypeTableStmts
 
 typedef enum {

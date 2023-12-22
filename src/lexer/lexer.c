@@ -49,8 +49,7 @@ int lexer_add_token(
 
   worker = u_strnew(a, "(");
   worker = u_strcat(a, worker, u_strnew(a, token_type_str[t]));
-  if (   t == TokenType_ID
-      || t == TokenType_NUMBER)
+  if (data != NULL)
     worker = u_strcat(a, worker, u_strnew(a, ","));
   worker = u_strcat(a,
       (data) ? u_strcat(a, worker, data): worker,
@@ -93,6 +92,76 @@ int lexer_add_string_token(
     return index - 1;
 }
 
+int lexer_handle_keywords(Arena* context, Lexer* lex, string* in, int index)
+{
+  switch(u_getc(in, index))
+  {
+  case 'b':
+    if (u_strcmp(u_strslice(context, in, index, index + 5), u_strnew(context, "break")) == 0) {
+      lexer_add_token(context, lex, TokenType_BREAK, NULL);
+      return 1;
+    }
+  case 'd':
+    if (u_getc(in, index + 1) == 'o') {
+      lexer_add_token(context, lex, TokenType_DO, NULL);
+      return 1;
+    }
+    break;
+  case 'e':
+    switch(u_getc(in, index + 1))
+    {
+    case 'l':
+      if (u_strcmp(u_strslice(context, in, index, index + 4), u_strnew(context, "else")) == 0) {
+        lexer_add_token(context, lex, TokenType_ELSE, NULL);
+        return 1;
+      }
+    case 'n':
+      if (u_strcmp(u_strslice(context, in, index, index + 3), u_strnew(context, "env")) == 0) {
+        lexer_add_token(context, lex, TokenType_ENV, NULL);
+        return 1;
+      }
+    }
+    break;
+  case 'f':
+    if (u_strcmp(u_strslice(context, in, index, index + 3), u_strnew(context, "for")) == 0) {
+      lexer_add_token(context, lex, TokenType_FOR, NULL);
+      return 1;
+    }
+    break;
+  case 'i':
+    switch (u_getc(in, index + 1)) {
+    case 'f':
+      lexer_add_token(context, lex, TokenType_IF, NULL);
+      return 1;
+    case 'n':
+      if (u_strcmp(u_strslice(context, in, index, index + 6), u_strnew(context, "inline")) == 0) {
+        lexer_add_token(context, lex, TokenType_INLINE, NULL);
+        return 1;
+      }
+    }
+    break;
+  case 'm':
+    if (u_strcmp(u_strslice(context, in, index, index + 3), u_strnew(context, "mut")) == 0) {
+      lexer_add_token(context, lex, TokenType_MUT, NULL);
+      return 1;
+    }
+    break;
+  case 's':
+    if (u_strcmp(u_strslice(context, in, index, index + 6), u_strnew(context, "switch")) == 0) {
+      lexer_add_token(context, lex, TokenType_SWITCH, NULL);
+      return 1;
+    }
+    break;
+  case 'w':
+    if (u_strcmp(u_strslice(context, in, index, index + 5), u_strnew(context, "while")) == 0) {
+      lexer_add_token(context, lex, TokenType_WHILE, NULL);
+      return 1;
+    }
+    break;
+  }
+  return 0;
+}
+
 Lexer* lexer_create(Arena *context, string* in)
 {
   Arena *a = arena_create();
@@ -109,54 +178,65 @@ Lexer* lexer_create(Arena *context, string* in)
 
     switch(c)
     {
+
 #define X(name, first, str) \
-      case  first:\
-        lexer_add_token(context, lex, TokenType_##name, NULL);\
-        break;
-      TokenTypeTableSimple
+    case  first:\
+      lexer_add_token(context, lex, TokenType_##name, NULL);\
+      break;
+    TokenTypeTableSimple
 #undef X
-      case '-':
-        if(u_getc(in, index + 1) == '>') {
-          lexer_add_token(context, lex, TokenType_SMALLARROW, NULL);
-          index++;
-        }
-        else
-          lexer_add_token(context, lex, TokenType_MINUS, NULL);
+
+#define X(name, second, str)\
+    case second:\
+      lexer_add_token(context, lex, TokenType_##name, NULL);\
+      index++;\
+      break;\
+
+#define X_OVERLOAD(first, TokenTypeTable, base)\
+    case first:\
+      switch(u_getc(in, index + 1))\
+      {\
+        TokenTypeTable\
+        default:\
+          lexer_add_token(context, lex, TokenType_##base, NULL);\
+      }\
+      break;
+    
+    X_OVERLOAD('&', TokenTypeTableAnd, BW_AND);
+    X_OVERLOAD('=', TokenTypeTableAssign, ASSIGN);
+    X_OVERLOAD('<', TokenTypeTableAngle, LANGLE);
+    X_OVERLOAD(':', TokenTypeTableColon, COLON);
+    X_OVERLOAD('-', TokenTypeTableMinus, MINUS);
+    X_OVERLOAD('|', TokenTypeTableOr, BW_OR);
+
+#undef X
+#undef X_OVERLOAD
+
+    case '0':
+      switch(u_getc(in, index + 1))
+      {
+      case 'x': 
+        index = lexer_add_string_token(context, lex, TokenType_HEX, is_xdigit, in, index + 2);
         break;
-      case '=':
-        switch(u_getc(in, index + 1))
-        {
-          case '=':
-            lexer_add_token(context, lex, TokenType_EQUALS, NULL);
-            index++;
-            break;
-          case '>':
-            lexer_add_token(context, lex, TokenType_BIGARROW, NULL);
-            index++;
-            break;
-          default:
-            lexer_add_token(context, lex, TokenType_ASSIGN, NULL);
-        }
-        break;
-      case '0':
-        switch(u_getc(in, index + 1))
-        {
-          case 'x': 
-            index = lexer_add_string_token(context, lex, TokenType_HEX, is_xdigit, in, index);
-            break;
-          case'0': case'1': case'2': case'3':
-          case'4': case'5': case'6': case'7':
-            index = lexer_add_string_token(context, lex, TokenType_OCTAL, is_octal, in, index);
-          case'b':
-            index = lexer_add_string_token(context, lex, TokenType_BINARY, is_binary, in, index);
-        }
-      default:
-        if (isdigit(c)) {
-          index = lexer_add_string_token(context, lex, TokenType_NUMBER, is_digit, in, index);
-        } else if (isalpha(c)) {
-          index = lexer_add_string_token(context, lex, TokenType_ID, is_alnum, in, index);
-        }
-        break;
+      case'0': case'1': case'2': case'3':
+      case'4': case'5': case'6': case'7':
+        index = lexer_add_string_token(context, lex, TokenType_OCTAL, is_octal, in, index + 1);
+      case'b':
+        index = lexer_add_string_token(context, lex, TokenType_BINARY, is_binary, in, index + 2);
+      }
+      break;
+
+    case'a':case'b':case'c':case'd':case'e':case'f':case'g':case'h':case'i':case'j':case'k':case'l':case'm':
+    case'n':case'o':case'p':case'q':case'r':case's':case't':case'u':case'v':case'w':case'x':case'y':case'z':
+      if (lexer_handle_keywords(b, lex, in, index)) break;
+
+    default:
+      if (isdigit(c)) {
+        index = lexer_add_string_token(context, lex, TokenType_NUMBER, is_digit, in, index);
+      } else if (isalpha(c)) {
+        index = lexer_add_string_token(context, lex, TokenType_ID, is_alnum, in, index);
+      }
+      break;
     };
 
     arena_free(b);

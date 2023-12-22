@@ -15,11 +15,12 @@ int main(int argc, char** argv)
     return -1;
   }
 
-  string* in = u_strnew(a, "let x: int = 1000;");
-  in = u_strcat(a, in, u_strnew(a, "let y: float = 0200;"));
-  in = u_strcat(a, in, u_strnew(a, "let z:(x: int, y: float)=>(ret: int);"));
-  in = u_strcat(a, in, u_strnew(a, "let w := 0x1adf"));
-  in = u_strcat(a, in, u_strnew(a, "let a := 0b0011"));
+  string* in = u_strnew(a, "");
+  in = u_strcat(a, in, u_strnew(a, "x: int = 1000;"));
+  in = u_strcat(a, in, u_strnew(a, "y: float = 0200;"));
+  in = u_strcat(a, in, u_strnew(a, "z:(x: int, y: float)=>(ret: int);"));
+  in = u_strcat(a, in, u_strnew(a, "w := 0x1adf;"));
+  in = u_strcat(a, in, u_strnew(a, "a := 0b0011;"));
   Lexer* l = lexer_create(a, in);
   string* out = lexer_to_string(a, l);
   u_prints(out);
