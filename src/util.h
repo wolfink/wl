@@ -16,6 +16,7 @@ typedef int (*CTypeFunction)(char);
 static inline int is_alpha(char c)  { return isalpha(c); }
 static inline int is_alnum(char c)  { return isalnum(c); }
 static inline int is_digit(char c)  { return isdigit(c); }
+static inline int is_float(char c)  { return isdigit(c); }
 static inline int is_binary(char c) { return (c == '0' || c == '1'); }
 static inline int is_octal(char c)  { return (c >= '0' && c < '8'); }
 static inline int is_xdigit(char c) 

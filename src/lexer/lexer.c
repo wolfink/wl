@@ -2,7 +2,9 @@
 #include "../lexer.h"
 #include "../defs.h"
 #include <ctype.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <sys/types.h>
 #include <wctype.h>
 
 Lexer* lexer_new(Arena* a)
@@ -85,81 +87,12 @@ int lexer_add_string_token(
        && matcher(c)) {
       temp[pos++] = c;
       c = u_getc(in, ++index);
+      // Handle float period
     }
     temp[pos] = '\0';
     lexer_add_token(context, lex, t, u_strnew(lcl, temp));
     arena_free(lcl);
     return index - 1;
-}
-
-int lexer_handle_keywords(Arena* context, Lexer* lex, string* in, int index)
-{
-  switch(u_getc(in, index))
-  {
-  case 'b':
-    if (u_strcmp(u_strslice(context, in, index, index + 5), u_strnew(context, "break")) == 0) {
-      lexer_add_token(context, lex, TokenType_BREAK, NULL);
-      return 1;
-    }
-  case 'd':
-    if (u_getc(in, index + 1) == 'o') {
-      lexer_add_token(context, lex, TokenType_DO, NULL);
-      return 1;
-    }
-    break;
-  case 'e':
-    switch(u_getc(in, index + 1))
-    {
-    case 'l':
-      if (u_strcmp(u_strslice(context, in, index, index + 4), u_strnew(context, "else")) == 0) {
-        lexer_add_token(context, lex, TokenType_ELSE, NULL);
-        return 1;
-      }
-    case 'n':
-      if (u_strcmp(u_strslice(context, in, index, index + 3), u_strnew(context, "env")) == 0) {
-        lexer_add_token(context, lex, TokenType_ENV, NULL);
-        return 1;
-      }
-    }
-    break;
-  case 'f':
-    if (u_strcmp(u_strslice(context, in, index, index + 3), u_strnew(context, "for")) == 0) {
-      lexer_add_token(context, lex, TokenType_FOR, NULL);
-      return 1;
-    }
-    break;
-  case 'i':
-    switch (u_getc(in, index + 1)) {
-    case 'f':
-      lexer_add_token(context, lex, TokenType_IF, NULL);
-      return 1;
-    case 'n':
-      if (u_strcmp(u_strslice(context, in, index, index + 6), u_strnew(context, "inline")) == 0) {
-        lexer_add_token(context, lex, TokenType_INLINE, NULL);
-        return 1;
-      }
-    }
-    break;
-  case 'm':
-    if (u_strcmp(u_strslice(context, in, index, index + 3), u_strnew(context, "mut")) == 0) {
-      lexer_add_token(context, lex, TokenType_MUT, NULL);
-      return 1;
-    }
-    break;
-  case 's':
-    if (u_strcmp(u_strslice(context, in, index, index + 6), u_strnew(context, "switch")) == 0) {
-      lexer_add_token(context, lex, TokenType_SWITCH, NULL);
-      return 1;
-    }
-    break;
-  case 'w':
-    if (u_strcmp(u_strslice(context, in, index, index + 5), u_strnew(context, "while")) == 0) {
-      lexer_add_token(context, lex, TokenType_WHILE, NULL);
-      return 1;
-    }
-    break;
-  }
-  return 0;
 }
 
 Lexer* lexer_create(Arena *context, string* in)
@@ -173,71 +106,95 @@ Lexer* lexer_create(Arena *context, string* in)
   {
     Arena *b = arena_create_init(MAX_TOKEN_LEN + sizeof(size_t) + 1);
 
-    char c = u_getc(in, index);
+    uint64_t* str_int = (u_int64_t*) u_strslice(b, in, index, index + 8);
     char temp[MAX_TOKEN_LEN + 1];
 
+#define X(name, number, str)\
+  case number:\
+    lexer_add_token(context, lex, TokenType_##name, NULL);\
+    index += TOKEN_SIZE - 1;\
+    continue;
+#define T(a) ((u_int64_t) a)
+
+    // Handle tokens with 6 characters
+#define TOKEN_SIZE 6
+    switch(*str_int & (T(-1) >> 8 * 2))
+    {
+      TokenTypeTable6
+    }
+#undef TOKEN_SIZE
+
+    // Handle tokens with 5 characters
+#define TOKEN_SIZE 5
+    switch(*str_int & (T(-1) >> 8 * 3))
+    {
+      TokenTypeTable5
+    }
+#undef TOKEN_SIZE
+
+    // Handle tokens with 4 characters
+#define TOKEN_SIZE 4
+    switch(*str_int & (T(-1) >> 8 * 4))
+    {
+      TokenTypeTable4
+    }
+#undef TOKEN_SIZE
+
+    // Handle tokens with 3 characters
+#define TOKEN_SIZE 3
+    switch(*str_int & (T(-1) >> 8 * 5))
+    {
+      TokenTypeTable3
+    }
+#undef TOKEN_SIZE
+
+    // Handle tokens with 2 characters
+#define TOKEN_SIZE 2
+    switch(*str_int & (T(-1) >> 8 * 6))
+    {
+      TokenTypeTable2
+    }
+#undef TOKEN_SIZE
+
+    // Handle tokens with 1 character and string tokens
+#define TOKEN_SIZE 1
+    char c = *str_int & 255;
     switch(c)
     {
+      TokenTypeTable1
 
-#define X(name, first, str) \
-    case  first:\
-      lexer_add_token(context, lex, TokenType_##name, NULL);\
-      break;
-    TokenTypeTableSimple
-#undef X
-
-#define X(name, second, str)\
-    case second:\
-      lexer_add_token(context, lex, TokenType_##name, NULL);\
-      index++;\
-      break;\
-
-#define X_OVERLOAD(first, TokenTypeTable, base)\
-    case first:\
-      switch(u_getc(in, index + 1))\
-      {\
-        TokenTypeTable\
-        default:\
-          lexer_add_token(context, lex, TokenType_##base, NULL);\
-      }\
-      break;
-    
-    X_OVERLOAD('&', TokenTypeTableAnd, BW_AND);
-    X_OVERLOAD('=', TokenTypeTableAssign, ASSIGN);
-    X_OVERLOAD('<', TokenTypeTableAngle, LANGLE);
-    X_OVERLOAD(':', TokenTypeTableColon, COLON);
-    X_OVERLOAD('-', TokenTypeTableMinus, MINUS);
-    X_OVERLOAD('|', TokenTypeTableOr, BW_OR);
-
-#undef X
-#undef X_OVERLOAD
-
-    case '0':
-      switch(u_getc(in, index + 1))
-      {
-      case 'x': 
-        index = lexer_add_string_token(context, lex, TokenType_HEX, is_xdigit, in, index + 2);
+      case '0':
+        switch(u_getc(in, index + 1))
+        {
+        case 'x': 
+          index = lexer_add_string_token(context, lex, TokenType_HEX, is_xdigit, in, index + 2);
+          break;
+        case'0': case'1': case'2': case'3':
+        case'4': case'5': case'6': case'7':
+          index = lexer_add_string_token(context, lex, TokenType_OCTAL, is_octal, in, index + 1);
+          break;
+        case'b':
+          index = lexer_add_string_token(context, lex, TokenType_BINARY, is_binary, in, index + 2);
+          break;
+        }
         break;
-      case'0': case'1': case'2': case'3':
-      case'4': case'5': case'6': case'7':
-        index = lexer_add_string_token(context, lex, TokenType_OCTAL, is_octal, in, index + 1);
-      case'b':
-        index = lexer_add_string_token(context, lex, TokenType_BINARY, is_binary, in, index + 2);
-      }
-      break;
 
-    case'a':case'b':case'c':case'd':case'e':case'f':case'g':case'h':case'i':case'j':case'k':case'l':case'm':
-    case'n':case'o':case'p':case'q':case'r':case's':case't':case'u':case'v':case'w':case'x':case'y':case'z':
-      if (lexer_handle_keywords(b, lex, in, index)) break;
+      default:
+        if (isdigit(c)) {
+          TokenType t = TokenType_NUMBER;
 
-    default:
-      if (isdigit(c)) {
-        index = lexer_add_string_token(context, lex, TokenType_NUMBER, is_digit, in, index);
-      } else if (isalpha(c)) {
-        index = lexer_add_string_token(context, lex, TokenType_ID, is_alnum, in, index);
-      }
-      break;
-    };
+          for (int i = 0; i < strlen(in) && isdigit(c = u_getc(in, index + i)); i++) {}
+          if (!isspace(c) && c != 'f') {
+            //TODO: raise error invalid suffix 
+          }
+          index = lexer_add_string_token(context, lex, TokenType_NUMBER, is_digit, in, index);
+        } else if (isalpha(c)) {
+          index = lexer_add_string_token(context, lex, TokenType_ID, is_alnum, in, index);
+        }
+    }
+#undef X
+#undef TOKEN_SIZE
+#undef T
 
     arena_free(b);
   }
@@ -252,7 +209,7 @@ string* lexer_get_value_at_index(Arena* context, Lexer* lex, size_t index)
   switch(t)
   {
     case TokenType_ID: case TokenType_NUMBER:
-      return u_strslice(context, lex->token_strings[index], strlen(token_type_str[t]) + 2, -1);
+      return u_strslice(context, lex->token_strings[index], strlen(token_type_str[t]) + 2, strlen(lex->token_strings[index]) - 1);
     default:
       return NULL;
   }

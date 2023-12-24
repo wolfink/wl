@@ -5,14 +5,18 @@
 #include "../util.h"
 #include <string.h>
 #include <ctype.h>
+#include <sys/types.h>
 
 #define MAX_TOKEN_LEN KB(1) - 1
 #define LEXER_DEFAULT_SIZE KB(80)
 
-char token_type_first[TokenType_COUNT] = {
-#define X(name, first, str) first,
+
+u_int64_t token_type_number[TokenType_COUNT] = {
+#define T(a) ((u_int64_t)a)
+#define X(name, number, str) number,
   TokenTypeTable
 #undef X
+#undef T
 };
 
 char *token_type_str[TokenType_COUNT] = {
