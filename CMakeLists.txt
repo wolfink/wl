@@ -13,6 +13,7 @@ file(GLOB SOURCE_FILES
   ${SRC_DIR}/*.h
   ${SRC_DIR}/util/*.c
   ${SRC_DIR}/lexer/*.c
+  ${SRC_DIR}/parser/*.c
   )
 
 add_executable(WolfinkLangCompiler ${SOURCE_FILES})

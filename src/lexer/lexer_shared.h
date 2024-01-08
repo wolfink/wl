@@ -13,6 +13,7 @@
   X(CARAT,        '^', "CARAT")\
   X(COLON,        ':', "COLON")\
   X(COMMA,        ',', "COMMA")\
+  X(FSLASH,       '/', "FSLASH") \
   X(LANGLE,       '<', "LANGLE")\
   X(LBRACE,       '{', "LBRACE")\
   X(LPAR,         '(', "LPAR")\
@@ -24,6 +25,7 @@
   X(RPAR,         ')', "RPAR")\
   X(SEMI,         ';', "SEMI") \
   X(STAR,         '*', "STAR")\
+  X(EOF,         '\0', "EOF")\
 
 #define TokenTypeTable2 \
   X(SMALLARROW,    CHAR_SUM_2('-', '>'), "S-ARROW")\

@@ -205,6 +205,10 @@ Lexer* lexer_create(Arena *context, string* in)
 
 string* lexer_get_value_at_index(Arena* context, Lexer* lex, size_t index)
 {
+  if (index > lex->strlen) {
+    printf("lexer_get_value_at_index(context = %p, lex = %p, index = %lu): index value too large\n", context, context, index);
+    return u_strnew(context, "");
+  }
   TokenType t = lex->tokens[index];
   switch(t)
   {
@@ -217,6 +221,10 @@ string* lexer_get_value_at_index(Arena* context, Lexer* lex, size_t index)
 
 TokenType lexer_get_token_type_at_index(Lexer* lex, size_t index)
 {
+  if (index > lex->len) {
+    printf("lexer_get_token_type_at_index(lex = %p, index = %lu)", lex, index);
+    return TokenType_COUNT;
+  }
   return lex->tokens[index];
 }
 

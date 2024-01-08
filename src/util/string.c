@@ -14,15 +14,16 @@ string* u_strnew(Arena* a, const string* in)
   return ret;
 }
 
-int u_strcpy(Arena* a, string* dest, const string* src)
+int u_strcpy(Arena* a, string** dest, const string* src)
 {
-  size_t* size = 0;
-  if (!dest) size = arena_alloc(a, sizeof(size_t) + STR_SIZE(src));
-  if(!size) return 1;
-  dest = STR_PTR(size);
+  if (!STR_SIZE(*dest)) {
+    size_t* size = arena_alloc(a, sizeof(size_t) + STR_SIZE(src));
+    if(!size) return 1;
+    *dest = STR_PTR(size);
+  }
 
-  memcpy(dest, src, STR_SIZE(src));
-  *size = STR_SIZE(src);
+  memcpy(*dest, src, STR_SIZE(src));
+  STR_SIZE(*dest) = STR_SIZE(src);
 
   return 0;
 }

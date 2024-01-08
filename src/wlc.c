@@ -1,3 +1,4 @@
+#include "parser.h"
 #include "util.h"
 #include "lexer.h"
 #include "defs.h"
@@ -19,18 +20,22 @@ int main(int argc, char** argv)
   in = u_strcat(a, in, u_strnew(a, "x: int = 1000;"));
   in = u_strcat(a, in, u_strnew(a, "y: float = 1.200;"));
   in = u_strcat(a, in, u_strnew(a, "z:(x: int, y: float)=>(ret: int);"));
-  in = u_strcat(a, in, u_strnew(a, "if x > 3 && y < 2 { x = z(x, y); } else { x = 0; }"));
-  in = u_strcat(a, in, u_strnew(a, "w := 0x1adf;"));
-  in = u_strcat(a, in, u_strnew(a, "a := 0b0011;"));
-  in = u_strcat(a, in, u_strnew(a, "b := 0200;"));
-  in = u_strcat(a, in, u_strnew(a, "c := 0.300;"));
-  in = u_strcat(a, in, u_strnew(a, "d := .400;"));
-  in = u_strcat(a, in, u_strnew(a, "e : (a: int, b: int) = (1, 2);"));
-  in = u_strcat(a, in, u_strnew(a, "f = e.a;"));
+  //in = u_strcat(a, in, u_strnew(a, "if x > 3 && y < 2 { x = z(x, y); } else { x = 0; }"));
+  in = u_strcat(a, in, u_strnew(a, "if x { x = z(x, y); } else { x = 0; }"));
+  //in = u_strcat(a, in, u_strnew(a, "w := 0x1adf;"));
+  //in = u_strcat(a, in, u_strnew(a, "a := 0b0011;"));
+  //in = u_strcat(a, in, u_strnew(a, "b := 0200;"));
+  //in = u_strcat(a, in, u_strnew(a, "c := 0.300;"));
+  //in = u_strcat(a, in, u_strnew(a, "d := .400;"));
+  //in = u_strcat(a, in, u_strnew(a, "e : (a: int, b: int) = (1, 2);"));
+  //in = u_strcat(a, in, u_strnew(a, "f = e.a;"));
+
+  printf("== Lexer output ========\n\n");
   Lexer* l = lexer_create(a, in);
   string* out = lexer_to_string(a, l);
   u_prints(out);
-  printf("\n");
+
+  printf("\n\n== Lexer values ========\n\n");
   for(int i = 0; i < lexer_get_len(l); i++)
   {
     Arena* b = arena_create();
@@ -38,6 +43,11 @@ int main(int argc, char** argv)
     if (out) { u_prints(out); printf("\n"); }
     arena_free(b);
   }
+
+  printf("\n\n== Parser ouput ========\n\n");
+  Parser* p = parser_create(a, l);
+  out = parser_to_string(a, p);
+  u_prints(out);
 
   arena_free(a);
   return 0;
