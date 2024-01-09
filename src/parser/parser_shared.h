@@ -6,6 +6,15 @@
   X(TUPLE_BODY, "TUPLE_BODY") \
   X(TUPLE_TYPE_BODY, "TUPLE_TYPE_BODY")
 
+// Term1 : +, -
+// Term2 : <, <=, >, >=
+// Term3 : ==, !=
+// Term4 : &
+// Term5 : ^
+// Term6 : |
+// Term7 : &&
+// Term8 : ||
+// Term9 : =, :=, +=, -=, *=, /=, etc.
 #define StdRules \
   X(ASSIGN, "ASSIGN") \
   X(BLOCK, "BLOCK") \
@@ -29,7 +38,16 @@
   X(STMT, "STMT") \
   X(SWITCH, "SWITCH") \
   X(TAG, "TAG") \
-  X(TERM, "TERM") \
+  X(TERM0, "TERM0") \
+  X(TERM1, "TERM1") \
+  X(TERM2, "TERM2") \
+  X(TERM3, "TERM3") \
+  X(TERM4, "TERM4") \
+  X(TERM5, "TERM5") \
+  X(TERM6, "TERM6") \
+  X(TERM7, "TERM7") \
+  X(TERM8, "TERM8") \
+  X(TERM9, "TERM9") \
   X(TUPLE, "TUPLE") \
   X(TUPLE_TYPE, "TUPLE_TYPE") \
   X(TUPLE_TYPE_BODY_TYPE, "TTB_TYPE") \

@@ -18,6 +18,10 @@ typedef struct AST
 
 } AST;
 
+static AST zero = {
+  0, 0, 0, 0, 0
+};
+
 AST* ast_create(Arena*, AST_Type);
 void ast_append(Arena*, AST*, AST*);
 int  ast_is_token(AST*);

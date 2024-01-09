@@ -100,15 +100,16 @@ string* ast_to_string(Arena* context, AST* tree, Lexer* lex, int indent)
     case TokenType_ID: case TokenType_NUMBER:
       ret = u_strcat(a, ret, u_strnew(a, ": "));
       ret = u_strcat(a, ret, lexer_get_value_at_index(a, lex, tree->token_num));
+      ret = u_strcat(a, ret, u_strnew(a, "\n"));
       break;
     default:
+      ret = u_strcat(a, ret, u_strnew(a, "\n"));
       for(int i = 0; i < tree->num_children; i++)
       {
-        ret = u_strcat(a, ret, ast_to_string(a, tree->children[0], lex, indent + 1));
+        ret = u_strcat(a, ret, ast_to_string(a, tree->children[i], lex, indent + 1));
       }
       break;
     }
-    ret = u_strcat(a, ret, u_strnew(a, "\n"));
     break;
   }
 

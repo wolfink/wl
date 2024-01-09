@@ -17,9 +17,28 @@ AST* r_##name(Arena* arena, Parser* parser) { \
 #define APPEND_TREE(branch) ast_append(arena, tree, branch)
 #define RETURN return tree
 #define NEXT_TOKEN next_token(parser)
-#define X(cmp) NEXT_TOKEN == TokenType_##cmp ||
+//#define X(cmp) NEXT_TOKEN == TokenType_##cmp ||
 #define FIRST(n, ...) first(next_token(parser), n, __VA_ARGS__)
 #define END_RULE return tree; }
+#define RULE_TERM(val, valm1, n, ...) \
+RULE_IMPL(TERM##val) \
+  AST* t1 = &zero, *t2 = &zero, *op = &zero; \
+  if (FIRST(2, TokenType_ID, TokenType_STAR)) t1 = RULE(VAR); \
+  else if (FIRST(1, TokenType_NUMBER)) t1 = RULE(LITERAL); \
+  while(FIRST(n, __VA_ARGS__)) { \
+    op = scan_op(arena, parser, n, __VA_ARGS__); \
+    t2 = RULE(TERM##valm1); \
+    if (t1->num_children != 0) ast_append(arena, op, t1); \
+    ast_append(arena, op, t2); \
+    APPEND_TREE(op); \
+  } \
+  if (tree->num_children == 0) { \
+    t2 = RULE(TERM##valm1); \
+    if (t2->num_children == 0) return t1; \
+    if (t1->num_children != 0) ast_append(arena, t2, t1); \
+    return t2; \
+  } \
+END_RULE
 
 int first(TokenType t, size_t n, ...)
 {
@@ -30,6 +49,26 @@ int first(TokenType t, size_t n, ...)
   va_end(ptr);
   return 0;
 }
+
+AST* scan_op(Arena* a, Parser* p, size_t n, ...)
+{
+  TokenType nt = next_token(p);
+  va_list ptr;
+  va_start(ptr, n);
+  for(int i = 0; i < n; i++) {
+    const TokenType check = va_arg(ptr, TokenType);
+    if (nt == check) return scan(a, p, nt);
+  }
+  switch (nt) {
+#define X(name, str)\
+  case ASTType_##name: \
+    die("scan_op: unexpected token: %s", str); break;
+  Rules
+#undef X
+  }
+  return NULL;
+}
+
 
 // RULE_IMPL(ASSIGN)
 //   RULE(VAR);
@@ -45,7 +84,7 @@ END_RULE
 
 RULE_IMPL(BRANCH)
   SCAN(IF);
-  APPEND_TREE(RULE(TERM));
+  APPEND_TREE(RULE(TERM1));
   APPEND_TREE(RULE(BLOCK));
   APPEND_TREE(RULE(ELSE));
 END_RULE
@@ -93,6 +132,9 @@ RULE_IMPL(ENV)
 END_RULE
 
 RULE_IMPL(EXPR)
+  APPEND_TREE(RULE(TERM9));
+  RETURN;
+  /*
   AST* n, *v, *e, *t1, *t2, *op;
   if (FIRST(1, TokenType_NUMBER)) {
     n = RULE(LITERAL);
@@ -100,32 +142,16 @@ RULE_IMPL(EXPR)
   }
   else if (FIRST(2, TokenType_ID, TokenType_STAR)) {
     v = RULE(VAR);
-    if (FIRST(1, TokenType_ASSIGN)) {
-      SCAN(ASSIGN);
-      e = RULE(EXPR);
-      t1 = ast_create(arena, ASTType_ASSIGN);
-      ast_append(arena, t1, v);
-      ast_append(arena, t1, e);
-      APPEND_TREE(t1);
-      RETURN;
-    } else if (FIRST(1, TokenType_COLON_ASSIGN)) {
-      SCAN(COLON_ASSIGN);
-      e = RULE(EXPR);
-      t1 = ast_create(arena, ASTType_COLON_ASSIGN);
-      ast_append(arena, t1, v);
-      ast_append(arena, t1, e);
-      APPEND_TREE(t1);
-      RETURN;
+    while (FIRST(2, TokenType_ASSIGN, TokenType_COLON_ASSIGN)) {
+      op = scan_op(arena, parser, 2, TokenType_ASSIGN, TokenType_COLON_ASSIGN);
+      t2 = RULE(TERM9);
+      ast_append(arena, op, v);
+      ast_append(arena, op, t2);
+      APPEND_TREE(op);
     }
-    APPEND_TREE(v);
+    if (tree->num_children == 0) APPEND_TREE(v);
   }
-  while (FIRST(2, TokenType_PLUS, TokenType_MINUS)) {
-    if (FIRST(1, TokenType_PLUS)) op = SCAN(PLUS);
-    else op = SCAN(MINUS);
-    t2 = RULE(TERM);
-    ast_append(arena, op, t2);
-    APPEND_TREE(op);
-  }
+  */
 END_RULE
 
 RULE_IMPL(FACTOR)
@@ -207,8 +233,43 @@ RULE_IMPL(TAG)
   SCAN(COLON);
 END_RULE
 
-RULE_IMPL(TERM)
-  AST* t1, *f;
+RULE_TERM(9, 8, 2, TokenType_ASSIGN, TokenType_COLON_ASSIGN)
+RULE_TERM(8, 7, 1, TokenType_OR)
+RULE_TERM(7, 6, 1, TokenType_AND)
+RULE_TERM(6, 4, 1, TokenType_BW_OR) // Skip 5 for now
+RULE_TERM(4, 3, 1, TokenType_BW_AND)
+RULE_TERM(3, 2, 1, TokenType_EQUALS)
+RULE_TERM(2, 1, 2, TokenType_LANGLE, TokenType_RANGLE)
+//RULE_TERM(1, 0, 2, TokenType_PLUS, TokenType_MINUS)
+
+AST *r_TERM1(Arena *arena, Parser *parser) {
+  AST *tree = ast_create(arena, ASTType_TERM1);
+  AST *t1 = &zero, *t2 = &zero, *op = &zero;
+  if (first(next_token(parser), 2, TokenType_ID, TokenType_STAR))
+    t1 = r_VAR(arena, parser);
+  else if (first(next_token(parser), 1, TokenType_NUMBER))
+    t1 = r_LITERAL(arena, parser);
+  while (first(next_token(parser), 2, TokenType_PLUS, TokenType_MINUS)) {
+    op = scan_op(arena, parser, 2, TokenType_PLUS, TokenType_MINUS);
+    t2 = r_TERM0(arena, parser);
+    if (t1->num_children != 0)
+      ast_append(arena, op, t1);
+    ast_append(arena, op, t2);
+    ast_append(arena, tree, op);
+  }
+  if (tree->num_children == 0) {
+    t2 = r_TERM0(arena, parser);
+    if (t2->num_children == 0)
+      return t1;
+    if (t1->num_children != 0)
+      ast_append(arena, t2, t1);
+    return t2;
+  }
+  return tree;
+}
+
+RULE_IMPL(TERM0)
+  AST* t1 = &zero, *f = &zero;
   if (FIRST(2, TokenType_ID, TokenType_STAR)) t1 = RULE(VAR);
   else if (FIRST(1, TokenType_NUMBER)) t1 = RULE(LITERAL);
   while(FIRST(2, TokenType_STAR, TokenType_FSLASH)) {
@@ -219,6 +280,7 @@ RULE_IMPL(TERM)
     ast_append(arena, op, f);
     APPEND_TREE(op);
   }
+  if (tree->num_children == 0) return t1;
 END_RULE
 
 RULE_IMPL(TUPLE)
