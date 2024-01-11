@@ -27,33 +27,43 @@
   X(ELSE, "ELSE") \
   X(ENV, "ENV") \
   X(EXPR, "EXPR") \
+  X(EXPR_OR, "EXPR_OR") \
+  X(EXPR_AND, "EXPR_AND") \
+  X(EXPR_BW_OR, "EXPR_BW_OR") \
+  X(EXPR_BW_AND, "EXPR_BW_AND") \
+  X(EXPR_EQ, "EXPR_EQ") \
+  X(EXPR_REL, "EXPR_REL") \
+  X(EXPR_SUM, "EXPR_SUM") \
+  X(EXPR_MUL, "EXPR_MUL") \
+  X(EXPR_UNARY, "EXPR_UNARY") \
   X(FACTOR, "FACTOR") \
   X(FLOAT, "FLOAT") \
   X(FUNCTION_TYPE, "FUNCTION_TYPE") \
   X(LITERAL, "LITERAL") \
+  X(METHOD, "METHOD") \
   X(METHOD_TYPE, "METHOD_TYPE") \
   X(MUT_TYPE, "MUT_TYPE") \
+  X(MUL_EXPR, "MUL_EXPR") \
+  X(OP_EQ, "OP_EQ") \
+  X(OP_REL, "OP_REL") \
+  X(OP_SUM, "OP_SUM") \
+  X(OP_MUL, "OP_MUL") \
+  X(OP_UNARY, "OP_UNARY") \
   X(POINTER_TYPE, "POINTER_TYPE") \
   X(PROGRAM, "PROGRAM") \
+  X(PRIMARY, "PRIMARY") \
   X(STMT, "STMT") \
   X(SWITCH, "SWITCH") \
+  X(SUM_EXPR, "SUM_EXPR") \
   X(TAG, "TAG") \
-  X(TERM0, "TERM0") \
-  X(TERM1, "TERM1") \
-  X(TERM2, "TERM2") \
-  X(TERM3, "TERM3") \
-  X(TERM4, "TERM4") \
-  X(TERM5, "TERM5") \
-  X(TERM6, "TERM6") \
-  X(TERM7, "TERM7") \
-  X(TERM8, "TERM8") \
-  X(TERM9, "TERM9") \
+  X(TERM, "TERM") \
   X(TUPLE, "TUPLE") \
   X(TUPLE_TYPE, "TUPLE_TYPE") \
   X(TUPLE_TYPE_BODY_TYPE, "TTB_TYPE") \
   X(TYPE, "TYPE") \
+  X(UNARY, "UNARY") \
+  X(VAR, "VAR")\
   X(WHILE, "WHILE") \
-  X(VAR, "VAR")
 
 #define Rules \
   StdRules \

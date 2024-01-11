@@ -4,6 +4,7 @@
 
 AST* ast_create(Arena* arena, AST_Type type)
 {
+  if (!arena) return NULL;
   AST* ret = arena_alloc(arena, sizeof(AST));
   ret->type = type;
   ret->num_children = 0;
@@ -14,6 +15,7 @@ AST* ast_create(Arena* arena, AST_Type type)
 
 void ast_resize(Arena* arena, AST* ast, size_t new_size)
 {
+  if (!arena || !ast) return;
   if (new_size <= ast->size) return;
   AST** new_children = arena_alloc(arena, sizeof(AST*) * new_size);
   memcpy(new_children, ast->children, sizeof(AST*) * ast->size);
@@ -23,6 +25,7 @@ void ast_resize(Arena* arena, AST* ast, size_t new_size)
 
 void ast_append(Arena* arena, AST* dest, AST* src)
 {
+  if (!arena || !dest || !src) return;
   if (dest->size == 0) ast_resize(arena, dest, 1);
   else if (dest->size == 1) ast_resize(arena, dest, 3);
   else if (dest->num_children >= dest->size)  ast_resize(arena, dest, dest->size * 2);
@@ -62,6 +65,28 @@ string* list_rule_to_string(Arena* context, const AST* tree, const string* src, 
   return ret;
 }
 
+// Handle empty string errors
+void ast_handle_str_error (Arena* a, AST* t, Lexer* l)
+{
+  switch(t->type) {
+#define X(name, string) \
+  case ASTType_##name: \
+    die("NULL string at type: %s", string);
+  Rules
+#undef X
+  case ASTType_TOKEN:
+#define X(name, string, first)
+    die("NULL string at type: TOKEN, value: %s\n", lexer_get_value_at_index(a, l, t->token_num));
+#undef X
+  case ASTType_NUMBER:
+#define X(name, string, first)
+    die("NULL string at type: NUMBER, value: %s\n", lexer_get_value_at_index(a, l, t->token_num));
+#undef X
+  default:
+    die("NULL string at type: ID\n");
+  }
+}
+
 string* ast_to_string(Arena* context, AST* tree, Lexer* lex, int indent)
 {
   Arena* a = arena_create();
@@ -97,7 +122,7 @@ string* ast_to_string(Arena* context, AST* tree, Lexer* lex, int indent)
     }
     switch(t)
     {
-    case TokenType_ID: case TokenType_NUMBER:
+    case TokenType_ID: case TokenType_NUMBER: case TokenType_HEX: case TokenType_OCTAL: case TokenType_BINARY:
       ret = u_strcat(a, ret, u_strnew(a, ": "));
       ret = u_strcat(a, ret, lexer_get_value_at_index(a, lex, tree->token_num));
       ret = u_strcat(a, ret, u_strnew(a, "\n"));
@@ -113,8 +138,11 @@ string* ast_to_string(Arena* context, AST* tree, Lexer* lex, int indent)
     break;
   }
 
+  if (ret == NULL) ast_handle_str_error(context, tree, lex);
+
+  ret = u_strcpyar(context, ret);
   arena_free(a);
-  return u_strcpyar(context, ret);
+  return ret;
 }
 
 int  ast_is_token(AST* ast)

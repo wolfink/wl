@@ -13,18 +13,36 @@ AST* scan(Arena* context, Parser* p, TokenType t)
 {
   AST* tree = ast_create(context, ASTType_TOKEN);
   tree->token_num = p->token_idx;
-  if (next_token(p) == t) {
+
+  TokenType nt = next_token(p);
+  if (nt == t) {
     skip(p);
     return tree;
   } else {
+    char* nts, *ts;
     switch(t)
     {
 #define X(name, first, str) \
     case TokenType_##name: \
-      die("missing token: %s\n", str);
+      ts = str; \
+      break;
     TokenTypeTable
 #undef X
+    default:
+      ts = "";
     }
+    switch(nt)
+    {
+#define X(name, first, str) \
+    case TokenType_##name: \
+      nts = str; \
+      break;
+    TokenTypeTable
+#undef X
+    default:
+      nts = "";
+    }
+    die("expected: %s, got: %s\n", ts, nts);
   }
 }
 

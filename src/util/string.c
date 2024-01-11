@@ -6,6 +6,7 @@
 
 string* u_strnew(Arena* a, const string* in)
 {
+  if (!a) return NULL;
   size_t len = strlen(in);
   size_t* size = arena_alloc(a, sizeof(size_t) + len);
   string* ret = STR_PTR(size);
@@ -16,9 +17,12 @@ string* u_strnew(Arena* a, const string* in)
 
 int u_strcpy(Arena* a, string** dest, const string* src)
 {
+  if (!a) return 1;
+  if (!dest) return 2;
+  if (!src) return 3;
   if (!STR_SIZE(*dest)) {
     size_t* size = arena_alloc(a, sizeof(size_t) + STR_SIZE(src));
-    if(!size) return 1;
+    if(!size) return 4;
     *dest = STR_PTR(size);
   }
 
@@ -30,6 +34,7 @@ int u_strcpy(Arena* a, string** dest, const string* src)
 
 string* u_strcpyar(Arena* a, const string* src)
 {
+  if (!src) return NULL;
   size_t* size = arena_alloc(a, sizeof(size_t) + STR_SIZE(src));
   if(!size) return NULL;
   string* dest = STR_PTR(size);
@@ -53,6 +58,9 @@ size_t u_strlen(const string* str)
 
 string* u_strcat(Arena* arena, const string* restrict a, const string* restrict b)
 {
+  if (!arena) return NULL;
+  if (!a) return NULL;
+  if (!b) return NULL;
   const size_t new_len = STR_SIZE(a) + STR_SIZE(b);
   size_t* size = arena_alloc(arena, sizeof(size_t) + new_len);
   string* ret = (string*)(size + 1);
@@ -68,6 +76,8 @@ string* u_strcat(Arena* arena, const string* restrict a, const string* restrict 
 
 int u_strcmp(const string* a, const string* b)
 {
+  if (!a) return NULL;
+  if (!b) return NULL;
   const size_t alen = STR_SIZE(a);
   const size_t blen = STR_SIZE(b);
 
@@ -85,6 +95,7 @@ int u_strcmp(const string* a, const string* b)
 
 string* u_strslice(Arena* arena, const string* in, size_t start, size_t end)
 {
+  if (!arena || !in) return NULL;
   size_t len = end - start - 1;
   len = (len > u_strlen(in) - start - 1) ? u_strlen(in) - start: len;
   size_t* size = arena_alloc(arena, sizeof(size_t) + len);
@@ -96,6 +107,7 @@ string* u_strslice(Arena* arena, const string* in, size_t start, size_t end)
 
 void u_prints(const string* str)
 {
+  if (!str) return;
   size_t len = STR_SIZE(str);
   for(int i = 0; i < len; i++)
     putchar(str[i]);

@@ -212,7 +212,7 @@ string* lexer_get_value_at_index(Arena* context, Lexer* lex, size_t index)
   TokenType t = lex->tokens[index];
   switch(t)
   {
-    case TokenType_ID: case TokenType_NUMBER:
+    case TokenType_ID: case TokenType_NUMBER: case TokenType_HEX: case TokenType_OCTAL: case TokenType_BINARY:
       return u_strslice(context, lex->token_strings[index], strlen(token_type_str[t]) + 2, strlen(lex->token_strings[index]) - 1);
     default:
       return NULL;
