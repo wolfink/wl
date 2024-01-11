@@ -6,15 +6,15 @@
   X(TUPLE_BODY, "TUPLE_BODY") \
   X(TUPLE_TYPE_BODY, "TUPLE_TYPE_BODY")
 
-// Term1 : +, -
-// Term2 : <, <=, >, >=
-// Term3 : ==, !=
-// Term4 : &
-// Term5 : ^
-// Term6 : |
-// Term7 : &&
-// Term8 : ||
-// Term9 : =, :=, +=, -=, *=, /=, etc.
+// EXPR_SUM       : +, -
+// EXPR_REL       : <, <=, >, >=
+// EXPR_EQ        : ==, !=
+// EXPR_BW_AND    : &
+// *TODO*         : ^
+// EXPR_BW_OR     : |
+// EXPR_AND       : &&
+// EXPR_OR        : ||
+// ASSIGN         : =, :=, +=, -=, *=, /=, etc.
 #define StdRules \
   X(ASSIGN, "ASSIGN") \
   X(BLOCK, "BLOCK") \

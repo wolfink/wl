@@ -17,6 +17,7 @@ AST* r_##name(Arena* arena, Parser* parser) { \
 #define SCAN_ADD(token) ast_append(arena, tree, scan(arena, parser, TokenType_##token))
 #define CHECK_SCAN(token) ((NEXT_TOKEN == TokenType_##token) ? SCAN(token) : NULL)
 #define APPEND_TREE(branch) ast_append(arena, tree, branch)
+#define APPEND_AST(tree, branch) ast_append(arena, tree, branch)
 #define RETURN return tree
 //#define X(cmp) NEXT_TOKEN == TokenType_##cmp ||
 #define FIRST(n, ...) first(next_token(parser), n, __VA_ARGS__)
@@ -139,24 +140,6 @@ RULE_IMPL(EXPR)
     }
   } 
   APPEND_TREE(p);
-  /*
-  AST* n, *v, *e, *t1, *t2, *op;
-  if (FIRST(1, TokenType_NUMBER)) {
-    n = RULE(LITERAL);
-    APPEND_TREE(n);
-  }
-  else if (FIRST(2, TokenType_ID, TokenType_STAR)) {
-    v = RULE(VAR);
-    while (FIRST(2, TokenType_ASSIGN, TokenType_COLON_ASSIGN)) {
-      op = scan_op(arena, parser, 2, TokenType_ASSIGN, TokenType_COLON_ASSIGN);
-      t2 = RULE(TERM9);
-      ast_append(arena, op, v);
-      ast_append(arena, op, t2);
-      APPEND_TREE(op);
-    }
-    if (tree->num_children == 0) APPEND_TREE(v);
-  }
-  */
 END_RULE
 
 RULE_EXPR(EXPR_OR, CHECK_SCAN(OR), EXPR_AND)
@@ -170,7 +153,7 @@ RULE_EXPR(EXPR_MUL, RULE(OP_MUL), EXPR_UNARY);
 RULE_IMPL(EXPR_UNARY)
   AST* op = RULE(OP_UNARY);
   if (op != NULL) while (op != NULL) {
-    ast_append(arena, op, RULE(PRIMARY));
+    APPEND_AST(op, RULE(PRIMARY));
     APPEND_TREE(op);
     op = RULE(OP_UNARY);
   } else return RULE(PRIMARY);
@@ -181,26 +164,6 @@ RULE_OP(OP_REL, 2, TokenType_LANGLE, TokenType_RANGLE);
 RULE_OP(OP_SUM, 2, TokenType_PLUS, TokenType_MINUS);
 RULE_OP(OP_MUL, 2, TokenType_STAR, TokenType_FSLASH);
 RULE_OP(OP_UNARY, 1, TokenType_STAR);
-
-//RULE_IMPL(FACTOR)
-//  AST* t1 = NULL, *f = NULL;
-//  if (FIRST(2, TokenType_ID, TokenType_STAR)) t1 = RULE(VAR);
-//  else if (FIRST(1, TokenType_NUMBER)) t1 = RULE(LITERAL);
-//  while(FIRST(2, TokenType_STAR, TokenType_FSLASH)) {
-//    AST* op;
-//    if (FIRST(1, TokenType_STAR)) op = SCAN(STAR);
-//    else op = SCAN(FSLASH);
-//    f = RULE(UNARY);
-//    ast_append(arena, op, f);
-//    APPEND_TREE(op);
-//  }
-//  if (tree->num_children == 0) {
-//    f = RULE(UNARY);
-//    if (f && f->num_children == 0) return t1;
-//    if (t1 && t1->num_children != 0) ast_append(arena, f, t1);
-//    return f;
-//  }
-//END_RULE
 
 RULE_IMPL(FLOAT)
   SCAN(PERIOD);
@@ -219,7 +182,7 @@ RULE_IMPL(LITERAL)
     n = SCAN(NUMBER);
     if (NEXT_TOKEN == TokenType_PERIOD) {
       f = RULE(FLOAT);
-      ast_append(arena, f, n);
+      APPEND_AST(f, n);
       APPEND_TREE(f);
     } else APPEND_TREE(n);
   } else if (NEXT_TOKEN == TokenType_HEX) SCAN_ADD(HEX);
@@ -244,13 +207,13 @@ RULE_IMPL(PRIMARY)
   else if (NEXT_TOKEN == TokenType_ID) r = RULE(VAR);
   if (NEXT_TOKEN == TokenType_LPAR) {
     c = ast_create(arena, ASTType_CALL);
-    ast_append(arena, c, r);
-    ast_append(arena, c, RULE(TUPLE));
+    APPEND_AST(c, r);
+    APPEND_AST(c, RULE(TUPLE));
     return c;
   } else if (CHECK_SCAN(SMALLARROW) != NULL){
     c = ast_create(arena, ASTType_METHOD);
-    ast_append(arena, c, r);
-    ast_append(arena, c, RULE(TUPLE));
+    APPEND_AST(c, r);
+    APPEND_AST(c, RULE(TUPLE));
     return c;
   }
   if (FIRST(4, TokenType_NUMBER, TokenType_HEX, TokenType_OCTAL, TokenType_BINARY)) return RULE(LITERAL);
@@ -336,16 +299,16 @@ RULE_IMPL(TUPLE_TYPE_BODY_TYPE)
       SCAN(ASSIGN);
       e = RULE(EXPR);
       t1 = ast_create(arena, ASTType_ASSIGN);
-      ast_append(arena, t1, v);
-      ast_append(arena, t1, e);
+      APPEND_AST(t1, v);
+      APPEND_AST(t1, e);
       APPEND_TREE(t1);
       RETURN;
     } else if (FIRST(1, TokenType_COLON_ASSIGN)) {
       SCAN(COLON_ASSIGN);
       e = RULE(EXPR);
       t1 = ast_create(arena, ASTType_COLON_ASSIGN);
-      ast_append(arena, t1, v);
-      ast_append(arena, t1, e);
+      APPEND_AST(t1, v);
+      APPEND_AST(t1, e);
       APPEND_TREE(t1);
       RETURN;
     }
@@ -366,11 +329,11 @@ RULE_IMPL(TYPE)
   }
   else if (FIRST(1, TokenType_STAR)) {
     s = SCAN(STAR);
-    ast_append(arena, m, RULE(TYPE));
+    APPEND_AST(m, RULE(TYPE));
   }
   else if (FIRST(1, TokenType_MUT)) {
     m = SCAN(MUT);
-    ast_append(arena, m, RULE(TYPE));
+    APPEND_AST(m, RULE(TYPE));
   }
 
   // Handle methods and functions
@@ -388,7 +351,7 @@ RULE_IMPL(UNARY)
   AST* r;
   if (NEXT_TOKEN == TokenType_STAR) {
     r = SCAN(STAR);
-    ast_append(arena, r, RULE(TUPLE));
+    APPEND_AST(r, RULE(TUPLE));
   } else return RULE(TUPLE);
   return r;
 END_RULE
