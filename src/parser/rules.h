@@ -8,38 +8,39 @@
   Rules
 #undef X
 
-#define RULE(rule) r_##rule(arena, parser)
-#define RULE_IMPL(name) \
-AST* r_##name(Arena* arena, Parser* parser) { \
-  AST* tree = ast_create(arena, ASTType_##name);
+// Helper Macros and Functions ==========================================
+
+#define BRANCH_APPEND(tree, branch) ast_append(arena, tree, branch)
+#define BRANCH_CREATE(type) ast_create(arena, ASTType_##type)
+#define CHECK_SCAN(token) ((NEXT_TOKEN == TokenType_##token) ? SCAN(token) : NULL)
+#define END_RULE return tree; }
+#define FIRST(n, ...) first(next_token(parser), n, __VA_ARGS__)
 #define NEXT_TOKEN next_token(parser)
+#define RETURN_ROOT return tree
+#define ROOT_APPEND(branch) ast_append(arena, tree, branch)
+#define RULE(rule) r_##rule(arena, parser)
+#define RULE_EXPR(name, opfun, next)\
+  RULE_IMPL(name)\
+    AST* op = NULL;\
+    AST* n = RULE(next);\
+    if ((op = opfun) != NULL) {\
+      ROOT_APPEND(n);\
+      do {\
+        ROOT_APPEND(op);\
+        ROOT_APPEND(RULE(next));\
+      } while ((op = opfun) != NULL);\
+    }\
+    if (tree->num_children == 0) return n;\
+  END_RULE
+#define RULE_IMPL(name)\
+  AST* r_##name(Arena* arena, Parser* parser) {\
+    AST* tree = ast_create(arena, ASTType_##name);
+#define RULE_OP(name, n, ...)\
+  RULE_IMPL(name)\
+    return scan_op(arena, parser, n, __VA_ARGS__);\
+  END_RULE
 #define SCAN(token) scan(arena, parser, TokenType_##token)
 #define SCAN_ADD(token) ast_append(arena, tree, scan(arena, parser, TokenType_##token))
-#define CHECK_SCAN(token) ((NEXT_TOKEN == TokenType_##token) ? SCAN(token) : NULL)
-#define APPEND_TREE(branch) ast_append(arena, tree, branch)
-#define APPEND_AST(tree, branch) ast_append(arena, tree, branch)
-#define RETURN return tree
-//#define X(cmp) NEXT_TOKEN == TokenType_##cmp ||
-#define FIRST(n, ...) first(next_token(parser), n, __VA_ARGS__)
-#define END_RULE return tree; }
-#define RULE_EXPR(name, opfun, next) \
-RULE_IMPL(name) \
-  AST* op = NULL; \
-  AST* n = RULE(next); \
-  if ((op = opfun) != NULL) { \
-    APPEND_TREE(n); \
-    do { \
-      APPEND_TREE(op); \
-      APPEND_TREE(RULE(next)); \
-    } while ((op = opfun) != NULL); \
-  } \
-  if (tree->num_children == 0) return n; \
-END_RULE
-
-#define RULE_OP(name, n, ...) \
-RULE_IMPL(name) \
-  return scan_op(arena, parser, n, __VA_ARGS__); \
-END_RULE
 
 int first(TokenType t, size_t n, ...)
 {
@@ -63,6 +64,7 @@ AST* scan_op(Arena* a, Parser* p, size_t n, ...)
   return NULL;
 }
 
+// Rule Implementations =================================================
 
 RULE_IMPL(ASSIGN)
   AST* v, *r;
@@ -73,20 +75,20 @@ END_RULE
 
 RULE_IMPL(BLOCK)
   SCAN(LBRACE);
-  APPEND_TREE(RULE(STMT_LIST));
+  ROOT_APPEND(RULE(STMT_LIST));
   SCAN(RBRACE);
 END_RULE
 
 RULE_IMPL(BRANCH)
   SCAN(IF);
-  APPEND_TREE(RULE(EXPR));
-  APPEND_TREE(RULE(BLOCK));
-  APPEND_TREE(RULE(ELSE));
+  ROOT_APPEND(RULE(EXPR));
+  ROOT_APPEND(RULE(BLOCK));
+  ROOT_APPEND(RULE(ELSE));
 END_RULE
 
 RULE_IMPL(CALL)
   SCAN(ID);
-  APPEND_TREE(RULE(TUPLE));
+  ROOT_APPEND(RULE(TUPLE));
 END_RULE
 
 // RULE_IMPL(CASE)
@@ -102,9 +104,9 @@ RULE_IMPL(DO)
   AST* b, *w;
   SCAN(DO);
   b = RULE(BLOCK);
-  APPEND_TREE(b);
+  ROOT_APPEND(b);
   if (FIRST(1, TokenType_WHILE)) {
-    APPEND_TREE(RULE(WHILE));
+    ROOT_APPEND(RULE(WHILE));
   }
 END_RULE
 
@@ -112,11 +114,11 @@ RULE_IMPL(ELSE)
   AST *b;
   if(FIRST(1, TokenType_ELSE)) SCAN(ELSE);
   if(FIRST(1, TokenType_LBRACE)) {
-    APPEND_TREE(RULE(BLOCK));
+    ROOT_APPEND(RULE(BLOCK));
   }
   else {
     b = RULE(BRANCH);
-    APPEND_TREE(b);
+    ROOT_APPEND(b);
   }
 END_RULE
 
@@ -133,13 +135,13 @@ RULE_IMPL(EXPR)
   p = RULE(EXPR_OR);
   if (t == TokenType_ID) {
     if ((a = RULE(ASSIGN)) != NULL) {
-      APPEND_TREE(a);
-      APPEND_TREE(p);
-      APPEND_TREE(RULE(EXPR));
-      RETURN;
+      ROOT_APPEND(a);
+      ROOT_APPEND(p);
+      ROOT_APPEND(RULE(EXPR));
+      RETURN_ROOT;
     }
   } 
-  APPEND_TREE(p);
+  ROOT_APPEND(p);
 END_RULE
 
 RULE_EXPR(EXPR_OR, CHECK_SCAN(OR), EXPR_AND)
@@ -153,8 +155,8 @@ RULE_EXPR(EXPR_MUL, RULE(OP_MUL), EXPR_UNARY);
 RULE_IMPL(EXPR_UNARY)
   AST* op = RULE(OP_UNARY);
   if (op != NULL) while (op != NULL) {
-    APPEND_AST(op, RULE(PRIMARY));
-    APPEND_TREE(op);
+    BRANCH_APPEND(op, RULE(PRIMARY));
+    ROOT_APPEND(op);
     op = RULE(OP_UNARY);
   } else return RULE(PRIMARY);
 END_RULE
@@ -171,9 +173,9 @@ RULE_IMPL(FLOAT)
 END_RULE
 
 RULE_IMPL(FUNCTION_TYPE)
-  APPEND_TREE(RULE(TUPLE));
+  ROOT_APPEND(RULE(TUPLE));
   SCAN(BIGARROW);
-  APPEND_TREE(RULE(TUPLE));
+  ROOT_APPEND(RULE(TUPLE));
 END_RULE
 
 RULE_IMPL(LITERAL)
@@ -182,22 +184,22 @@ RULE_IMPL(LITERAL)
     n = SCAN(NUMBER);
     if (NEXT_TOKEN == TokenType_PERIOD) {
       f = RULE(FLOAT);
-      APPEND_AST(f, n);
-      APPEND_TREE(f);
-    } else APPEND_TREE(n);
+      BRANCH_APPEND(f, n);
+      ROOT_APPEND(f);
+    } else ROOT_APPEND(n);
   } else if (NEXT_TOKEN == TokenType_HEX) SCAN_ADD(HEX);
   else if (NEXT_TOKEN == TokenType_OCTAL) SCAN_ADD(OCTAL);
   else SCAN_ADD(BINARY);
 END_RULE
 
 RULE_IMPL(METHOD_TYPE)
-  APPEND_TREE(RULE(TUPLE));
+  ROOT_APPEND(RULE(TUPLE));
   SCAN(SMALLARROW);
-  APPEND_TREE(RULE(FUNCTION_TYPE));
+  ROOT_APPEND(RULE(FUNCTION_TYPE));
 END_RULE
 
 RULE_IMPL(PROGRAM)
-  APPEND_TREE(RULE(STMT_LIST));
+  ROOT_APPEND(RULE(STMT_LIST));
   // SCAN(EOF)
 END_RULE
 
@@ -206,14 +208,14 @@ RULE_IMPL(PRIMARY)
   if (NEXT_TOKEN == TokenType_LPAR) r = RULE(TUPLE);
   else if (NEXT_TOKEN == TokenType_ID) r = RULE(VAR);
   if (NEXT_TOKEN == TokenType_LPAR) {
-    c = ast_create(arena, ASTType_CALL);
-    APPEND_AST(c, r);
-    APPEND_AST(c, RULE(TUPLE));
+    c = BRANCH_CREATE(CALL);
+    BRANCH_APPEND(c, r);
+    BRANCH_APPEND(c, RULE(TUPLE));
     return c;
   } else if (CHECK_SCAN(SMALLARROW) != NULL){
-    c = ast_create(arena, ASTType_METHOD);
-    APPEND_AST(c, r);
-    APPEND_AST(c, RULE(TUPLE));
+    c = BRANCH_CREATE(METHOD);
+    BRANCH_APPEND(c, r);
+    BRANCH_APPEND(c, RULE(TUPLE));
     return c;
   }
   if (FIRST(4, TokenType_NUMBER, TokenType_HEX, TokenType_OCTAL, TokenType_BINARY)) return RULE(LITERAL);
@@ -222,33 +224,33 @@ END_RULE
 
 RULE_IMPL(STMT)
   if(FIRST(3, TokenType_ID, TokenType_NUMBER, TokenType_STAR)) {
-    APPEND_TREE(RULE(EXPR));
+    ROOT_APPEND(RULE(EXPR));
     SCAN(SEMI);
   }
-  else if(FIRST(1, TokenType_IF)) APPEND_TREE(RULE(BRANCH));
+  else if(FIRST(1, TokenType_IF)) ROOT_APPEND(RULE(BRANCH));
   else if(FIRST(1, TokenType_SWITCH)) {
-    APPEND_TREE(RULE(SWITCH));
+    ROOT_APPEND(RULE(SWITCH));
     SCAN(SEMI);
   }
-  else if(FIRST(1, TokenType_WHILE)) APPEND_TREE(RULE(WHILE));
-  else if(FIRST(1, TokenType_DO)) APPEND_TREE(RULE(DO));
+  else if(FIRST(1, TokenType_WHILE)) ROOT_APPEND(RULE(WHILE));
+  else if(FIRST(1, TokenType_DO)) ROOT_APPEND(RULE(DO));
   // TODO: handle CASE
-  else APPEND_TREE(RULE(ENV));
+  else ROOT_APPEND(RULE(ENV));
 END_RULE
 
 RULE_IMPL(STMT_LIST)
   if (FIRST(7,
         TokenType_ID, TokenType_NUMBER, TokenType_STAR, TokenType_IF,
         TokenType_SWITCH, TokenType_WHILE, TokenType_DO/*, TokenType_CASE */)) {
-    APPEND_TREE(RULE(STMT));
-    APPEND_TREE(RULE(STMT_LIST));
+    ROOT_APPEND(RULE(STMT));
+    ROOT_APPEND(RULE(STMT_LIST));
   }
 END_RULE
 
 RULE_IMPL(SWITCH)
   SCAN(SWITCH);
-  APPEND_TREE(RULE(EXPR));
-  APPEND_TREE(RULE(BLOCK));
+  ROOT_APPEND(RULE(EXPR));
+  ROOT_APPEND(RULE(BLOCK));
 END_RULE
 
 RULE_IMPL(TAG)
@@ -260,7 +262,7 @@ RULE_IMPL(TUPLE)
   if (NEXT_TOKEN == TokenType_LPAR)
   {
     SCAN(LPAR);
-    APPEND_TREE(RULE(TUPLE_BODY));
+    ROOT_APPEND(RULE(TUPLE_BODY));
     SCAN(RPAR);
   }
   else if (NEXT_TOKEN == TokenType_ID) return RULE(VAR);
@@ -268,24 +270,24 @@ RULE_IMPL(TUPLE)
 END_RULE
 
 RULE_IMPL(TUPLE_BODY)
-  APPEND_TREE(RULE(EXPR));
+  ROOT_APPEND(RULE(EXPR));
   if (FIRST(1, TokenType_COMMA)) {
     SCAN(COMMA);
-    APPEND_TREE(RULE(TUPLE_BODY));
+    ROOT_APPEND(RULE(TUPLE_BODY));
   }
 END_RULE
 
 RULE_IMPL(TUPLE_TYPE)
     SCAN(LPAR);
-    APPEND_TREE(RULE(TUPLE_TYPE_BODY));
+    ROOT_APPEND(RULE(TUPLE_TYPE_BODY));
     SCAN(RPAR);
 END_RULE
 
 RULE_IMPL(TUPLE_TYPE_BODY)
-  APPEND_TREE(RULE(TUPLE_TYPE_BODY_TYPE));
+  ROOT_APPEND(RULE(TUPLE_TYPE_BODY_TYPE));
   if (FIRST(1, TokenType_COMMA)) {
     SCAN(COMMA);
-    APPEND_TREE(RULE(TUPLE_TYPE_BODY));
+    ROOT_APPEND(RULE(TUPLE_TYPE_BODY));
   }
 END_RULE
 
@@ -298,23 +300,23 @@ RULE_IMPL(TUPLE_TYPE_BODY_TYPE)
     if (FIRST(1, TokenType_ASSIGN)) {
       SCAN(ASSIGN);
       e = RULE(EXPR);
-      t1 = ast_create(arena, ASTType_ASSIGN);
-      APPEND_AST(t1, v);
-      APPEND_AST(t1, e);
-      APPEND_TREE(t1);
-      RETURN;
+      t1 = BRANCH_CREATE(ASSIGN);
+      BRANCH_APPEND(t1, v);
+      BRANCH_APPEND(t1, e);
+      ROOT_APPEND(t1);
+      RETURN_ROOT;
     } else if (FIRST(1, TokenType_COLON_ASSIGN)) {
       SCAN(COLON_ASSIGN);
       e = RULE(EXPR);
-      t1 = ast_create(arena, ASTType_COLON_ASSIGN);
-      APPEND_AST(t1, v);
-      APPEND_AST(t1, e);
-      APPEND_TREE(t1);
-      RETURN;
+      t1 = BRANCH_CREATE(COLON_ASSIGN);
+      BRANCH_APPEND(t1, v);
+      BRANCH_APPEND(t1, e);
+      ROOT_APPEND(t1);
+      RETURN_ROOT;
     }
-    APPEND_TREE(v);
+    ROOT_APPEND(v);
   } else {
-    APPEND_TREE(RULE(TYPE));
+    ROOT_APPEND(RULE(TYPE));
   }
 END_RULE
 
@@ -325,25 +327,25 @@ RULE_IMPL(TYPE)
   if(FIRST(1, TokenType_ID)) SCAN_ADD(ID);
   else if(FIRST(1, TokenType_NUMBER)) SCAN_ADD(NUMBER);
   else if(FIRST(1, TokenType_LPAR)) {
-    APPEND_TREE(RULE(TUPLE_TYPE));
+    ROOT_APPEND(RULE(TUPLE_TYPE));
   }
   else if (FIRST(1, TokenType_STAR)) {
     s = SCAN(STAR);
-    APPEND_AST(m, RULE(TYPE));
+    BRANCH_APPEND(m, RULE(TYPE));
   }
   else if (FIRST(1, TokenType_MUT)) {
     m = SCAN(MUT);
-    APPEND_AST(m, RULE(TYPE));
+    BRANCH_APPEND(m, RULE(TYPE));
   }
 
   // Handle methods and functions
   if (FIRST(2, TokenType_BIGARROW, TokenType_SMALLARROW)) {
     if (NEXT_TOKEN == TokenType_SMALLARROW) {
       SCAN(SMALLARROW);
-      APPEND_TREE(RULE(TUPLE_TYPE));
+      ROOT_APPEND(RULE(TUPLE_TYPE));
     }
     SCAN(BIGARROW);
-    APPEND_TREE(RULE(TUPLE_TYPE));
+    ROOT_APPEND(RULE(TUPLE_TYPE));
   }
 END_RULE
 
@@ -351,7 +353,7 @@ RULE_IMPL(UNARY)
   AST* r;
   if (NEXT_TOKEN == TokenType_STAR) {
     r = SCAN(STAR);
-    APPEND_AST(r, RULE(TUPLE));
+    BRANCH_APPEND(r, RULE(TUPLE));
   } else return RULE(TUPLE);
   return r;
 END_RULE
@@ -360,20 +362,20 @@ END_RULE
 // pointer deref: *var or var*?
 RULE_IMPL(VAR)
   if (NEXT_TOKEN == TokenType_ID) SCAN_ADD(ID);
-  else if (NEXT_TOKEN == TokenType_STAR) APPEND_TREE(RULE(VAR));
+  else if (NEXT_TOKEN == TokenType_STAR) ROOT_APPEND(RULE(VAR));
   if (NEXT_TOKEN == TokenType_COLON) {
     SCAN(COLON);
-    APPEND_TREE(RULE(TYPE));
+    ROOT_APPEND(RULE(TYPE));
   } else if(NEXT_TOKEN == TokenType_PERIOD) {
     SCAN(PERIOD);
-    APPEND_TREE(RULE(VAR));
+    ROOT_APPEND(RULE(VAR));
   }
 END_RULE
 
 RULE_IMPL(WHILE)
   SCAN(WHILE);
-  APPEND_TREE(RULE(EXPR));
-  APPEND_TREE(RULE(BLOCK));
+  ROOT_APPEND(RULE(EXPR));
+  ROOT_APPEND(RULE(BLOCK));
 END_RULE
 
 #undef X
