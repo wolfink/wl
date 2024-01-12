@@ -2,7 +2,7 @@
 #define LEXER_INTERNAL_H
 
 #include "lexer_shared.h"
-#include "../util.h"
+#include "../include/util.h"
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>

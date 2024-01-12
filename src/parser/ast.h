@@ -2,8 +2,8 @@
 #define AST_H
 
 #include <stdio.h>
-#include "../util.h"
-#include "../lexer.h"
+#include "../include/util.h"
+#include "../include/lexer.h"
 #include "parser_shared.h"
 
 

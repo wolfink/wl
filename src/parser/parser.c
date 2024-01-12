@@ -1,8 +1,8 @@
 #include "ast.h"
 #include "parser_internal.h"
-#include "../parser.h"
-#include "../defs.h"
-#include "../lexer.h"
+#include "../include/parser.h"
+#include "../include/defs.h"
+#include "../include/lexer.h"
 
 #include "rules.h"
 #include <stdlib.h>

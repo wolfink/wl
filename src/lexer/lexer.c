@@ -1,6 +1,6 @@
 #include "lexer_internal.h"
-#include "../lexer.h"
-#include "../defs.h"
+#include "../include/lexer.h"
+#include "../include/defs.h"
 #include <ctype.h>
 #include <stdint.h>
 #include <stdio.h>

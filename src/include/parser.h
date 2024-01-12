@@ -6,7 +6,7 @@
 
 #ifndef PARSER_INTERNAL_H
 
-#include "parser/parser_shared.h"
+#include "../parser/parser_shared.h"
 typedef void Parser;
 
 #endif

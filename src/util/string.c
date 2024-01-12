@@ -1,5 +1,5 @@
 #include "util_internal.h"
-#include "../util.h"
+#include "../include/util.h"
 #include <memory.h>
 #include <stdio.h>
 #include <string.h>

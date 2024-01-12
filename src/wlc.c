@@ -1,7 +1,7 @@
-#include "parser.h"
-#include "util.h"
-#include "lexer.h"
-#include "defs.h"
+#include "include/parser.h"
+#include "include/util.h"
+#include "include/lexer.h"
+#include "include/defs.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <err.h>

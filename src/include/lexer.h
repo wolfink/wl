@@ -5,7 +5,7 @@
 
 #ifndef LEXER_INTERNAL_H
 
-#include "lexer/lexer_shared.h"
+#include "../lexer/lexer_shared.h"
 typedef void Lexer;
 
 #endif

@@ -1,8 +1,8 @@
 #ifndef PARSER_INTERNAL_H
 #define PARSER_INTERNAL_H
 
-#include "../util.h"
-#include "../lexer.h"
+#include "../include/util.h"
+#include "../include/lexer.h"
 #include "parser_shared.h"
 #include "ast.h"
 
