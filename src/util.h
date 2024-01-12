@@ -30,8 +30,10 @@ extern Arena* arena_create();
 extern Arena* arena_create_init(size_t initial_size);
 extern void   arena_set_static(Arena*, int);
 extern size_t arena_get_size(Arena*);
-extern size_t arena_get_used(Arena*);
-extern void*  arena_get_location(Arena*, size_t loc);
+//extern size_t arena_get_used(Arena*);
+//extern void*  arena_get_location(Arena*, size_t loc);
+extern void   arena_print(Arena*);
+//extern size_t arena_count_nodes(Arena*);
 extern void*  arena_alloc(Arena*, size_t bytes);
 extern void   arena_free(Arena*);
 

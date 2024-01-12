@@ -9,9 +9,15 @@
 
 typedef char string;
 
-typedef struct {
-  size_t location, size, flags;
+typedef struct ArenaNode {
   char* data;
+  size_t location;
+  struct ArenaNode* next;
+} ArenaNode;
+
+typedef struct {
+  size_t first_size, size, flags;
+  ArenaNode first;
 } Arena;
 
 #endif

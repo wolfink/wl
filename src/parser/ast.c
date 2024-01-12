@@ -36,32 +36,41 @@ void ast_append(Arena* arena, AST* dest, AST* src)
 
 string* std_rule_to_string(Arena* context, const AST* tree, const string* src, const string* val, Lexer* lex, int indent)
 {
+  Arena* a = arena_create();
+
   string* ret;
-  ret = u_strcat(context, src, val);
-  ret = u_strcat(context, ret, u_strnew(context, "\n"));
+  ret = u_strcat(a, src, val);
+  ret = u_strcat(a, ret, u_strnew(context, "\n"));
   for(int i = 0; i < tree->num_children; i++)
   {
-    string* child = ast_to_string(context, tree->children[i], lex, indent + 1);
+    string* child = ast_to_string(a, tree->children[i], lex, indent + 1);
     //printf("=== Before ===\n");
     //u_prints(child);
     //printf("\nchild size: %lu, ret size: %lu\n", u_strlen(child), u_strlen(ret));
-    ret = u_strcat(context, ret, child);
+    ret = u_strcat(a, ret, child);
     //printf("=== After ===\n");
     //u_prints(ret);
     //printf("\nchild size: %lu, ret size: %lu\n", u_strlen(child), u_strlen(ret));
   } 
+  ret = u_strcpyar(context, ret);
+  arena_free(a);
   return ret;
 }
 
 string* list_rule_to_string(Arena* context, const AST* tree, const string* src, const string* val, Lexer* lex, int indent)
 {
+  Arena* a = arena_create();
+
   string* ret;
-  ret = u_strcat(context, src, val);
-  ret = u_strcat(context, ret, u_strnew(context, "\n"));
+  ret = u_strcat(a, src, val);
+  ret = u_strcat(a, ret, u_strnew(a, "\n"));
   do {
-    ret = u_strcat(context, ret, ast_to_string(context, tree->children[0], lex, indent + 1));
+    ret = u_strcat(a, ret, ast_to_string(a, tree->children[0], lex, indent + 1));
     tree = tree->children[1];
   } while(tree->num_children > 1);
+
+  ret = u_strcpyar(context, ret);
+  arena_free(a);
   return ret;
 }
 
@@ -90,6 +99,7 @@ void ast_handle_str_error (Arena* a, AST* t, Lexer* l)
 string* ast_to_string(Arena* context, AST* tree, Lexer* lex, int indent)
 {
   Arena* a = arena_create();
+
   TokenType t;
 
   string* ret = u_strnew(a, "");

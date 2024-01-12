@@ -76,8 +76,8 @@ string* u_strcat(Arena* arena, const string* restrict a, const string* restrict 
 
 int u_strcmp(const string* a, const string* b)
 {
-  if (!a) return NULL;
-  if (!b) return NULL;
+  if (!a) die("u_strcmp: attempt to compare NULL strings\n");
+  if (!b) die("u_strcmp: attempt to compare NULL strings\n");
   const size_t alen = STR_SIZE(a);
   const size_t blen = STR_SIZE(b);
 
