@@ -7,6 +7,20 @@
 #include <sys/types.h>
 #include <wctype.h>
 
+string* token_type_tostr(Arena* a, TokenType t)
+{
+  switch(t)
+  {
+#define X(name, first, str)\
+  case TokenType_##name:\
+    return u_strnew(a, str);
+  TokenTypeTable
+#undef X
+  default:
+    return u_strnew(a, "???");
+  }
+}
+
 Lexer* lexer_new(Arena* a)
 {
   Lexer* ret = arena_alloc(a, sizeof(Lexer));

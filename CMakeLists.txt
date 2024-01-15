@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(WolfinkLangCompiler C)
 
+include(CTest)
+
 set(WLC_VERSION "0.1.0")
 
 option(TEST_ALL OFF)

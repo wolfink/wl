@@ -1,11 +1,15 @@
 if(TEST_ALL OR TEST_LEXER)
   add_subdirectory(lexer)
+  add_test(NAME test_tokens COMMAND lexer_test token)
+  add_test(NAME test_commands_solo COMMAND lexer_test solo)
 endif()
 
-if(TEST_ALL OR TEST_LEXER)
+if(TEST_ALL OR TEST_PARSER)
   add_subdirectory(parser)
+  add_test(NAME parser_test COMMAND parser_test)
 endif()
 
-if(TEST_ALL OR TEST_LEXER)
+if(TEST_ALL OR TEST_UTIL)
   add_subdirectory(util)
+  add_test(NAME util_test COMMAND util_test)
 endif()

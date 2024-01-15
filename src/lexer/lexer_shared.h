@@ -35,7 +35,8 @@
   X(OR,            CHAR_SUM_2('|', '|'), "OR")\
   X(COLON_ASSIGN,  CHAR_SUM_2(':', '='), "COLON-ASSIGN")\
   X(DBL_COLON,     CHAR_SUM_2(':', ':'), "DBL-COLON")\
-  X(COLON_ARROW,   CHAR_SUM_2('<', ':'), "COLON-ARROW")\
+  X(COLON_LARROW,   CHAR_SUM_2('<', ':'), "COLON-LARROW")\
+  X(COLON_RARROW,   CHAR_SUM_2(':', '>'), "COLON-RARROW")\
   X(IF,            CHAR_SUM_2('i', 'f'), "IF")\
   X(DO,            CHAR_SUM_2('d', 'o'), "DO")\
 

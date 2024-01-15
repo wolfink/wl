@@ -7,6 +7,7 @@
 string* u_strnew(Arena* a, const string* in)
 {
   if (!a) return NULL;
+  if (in == NULL) return NULL;
   size_t len = strlen(in);
   size_t* size = arena_alloc(a, sizeof(size_t) + len);
   string* ret = STR_PTR(size);
