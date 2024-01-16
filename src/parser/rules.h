@@ -180,7 +180,10 @@ END_RULE
 
 RULE_IMPL(LITERAL)
   AST* n, *f;
-  if (FIRST(1, TokenType_NUMBER)) {
+  if (NEXT_TOKEN == TokenType_PERIOD) {
+    f = RULE(FLOAT);
+    ROOT_APPEND(f);
+  } else if (NEXT_TOKEN == TokenType_NUMBER) {
     n = SCAN(NUMBER);
     if (NEXT_TOKEN == TokenType_PERIOD) {
       f = RULE(FLOAT);
@@ -218,7 +221,7 @@ RULE_IMPL(PRIMARY)
     BRANCH_APPEND(c, RULE(TUPLE));
     return c;
   }
-  if (FIRST(4, TokenType_NUMBER, TokenType_HEX, TokenType_OCTAL, TokenType_BINARY)) return RULE(LITERAL);
+  if (FIRST(5, TokenType_NUMBER, TokenType_HEX, TokenType_OCTAL, TokenType_BINARY, TokenType_PERIOD)) return RULE(LITERAL);
   return r;
 END_RULE
 

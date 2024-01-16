@@ -64,10 +64,11 @@ string* list_rule_to_string(Arena* context, const AST* tree, const string* src, 
   string* ret;
   ret = u_strcat(a, src, val);
   ret = u_strcat(a, ret, u_strnew(a, "\n"));
-  do {
+  while(tree->num_children > 0) {
     ret = u_strcat(a, ret, ast_to_string(a, tree->children[0], lex, indent + 1));
+    if (tree->num_children < 2) break;
     tree = tree->children[1];
-  } while(tree->num_children > 1);
+  }
 
   ret = u_strcpyar(context, ret);
   arena_free(a);

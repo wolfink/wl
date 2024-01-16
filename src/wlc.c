@@ -25,10 +25,10 @@ int main(int argc, char** argv)
   in = u_strcat(a, in, u_strnew(a, "w := 0x1adf;"));
   in = u_strcat(a, in, u_strnew(a, "a := 0b0011;"));
   in = u_strcat(a, in, u_strnew(a, "b := 0200;"));
-  //in = u_strcat(a, in, u_strnew(a, "c := 0.300;"));
-  //in = u_strcat(a, in, u_strnew(a, "d := .400;"));
-  //in = u_strcat(a, in, u_strnew(a, "e : (a: int, b: int) = (1, 2);"));
-  //in = u_strcat(a, in, u_strnew(a, "f = e.a;"));
+  in = u_strcat(a, in, u_strnew(a, "c := 0.300;"));
+  in = u_strcat(a, in, u_strnew(a, "d := .400;"));
+  in = u_strcat(a, in, u_strnew(a, "e : (a: int, b: int) = (1, 2);"));
+  in = u_strcat(a, in, u_strnew(a, "f = e.a;"));
 
   printf("== Lexer output ========\n\n");
   Lexer* l = lexer_create(a, in);
