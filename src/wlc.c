@@ -5,49 +5,81 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <err.h>
+#include <string.h>
+
+string* read_file(Arena* context, FILE* fp)
+{
+  Arena* a = arena_create();
+  char in_buffer[256];
+  string* ret = u_strnew(a, "");
+  while(fgets(in_buffer, 255, fp)) {
+    string* line = u_strnew(a, in_buffer);
+    ret = u_strcat(a, ret, line);
+  }
+  ret = u_strcpyar(context, ret);
+  arena_free(a);
+  return ret;
+}
+
+#define SHOW_LEXER  1
+#define SHOW_VALUES 1 << 1
+#define SHOW_PARSER 1 << 2
+
+void usage()
+{
+  die("Usage: wlc <filename> [-l lexer] [-v values] [-p parser]\n");
+}
 
 int main(int argc, char** argv)
 {
   Arena* a = arena_create_init(MB(1));
-  arena_set_static(a, 1);
+  size_t flags = 0;
+  //arena_set_static(a, 1);
 
   if (argc < 2) {
-    printf("Usage: wlc <filename>\n");
-    return -1;
+    usage();
   }
 
-  string* in = u_strnew(a, "");
-  in = u_strcat(a, in, u_strnew(a, "x: int = 1000;"));
-  in = u_strcat(a, in, u_strnew(a, "y: float = 1.200;"));
-  in = u_strcat(a, in, u_strnew(a, "z:(x: int, y: float)=>(ret: int);"));
-  in = u_strcat(a, in, u_strnew(a, "if x > 3 && y < 2 { x = z(x, y); } else { x = 1; }"));
-  in = u_strcat(a, in, u_strnew(a, "x = x * 2 + 1000 - 30;"));
-  in = u_strcat(a, in, u_strnew(a, "w := 0x1adf;"));
-  in = u_strcat(a, in, u_strnew(a, "a := 0b0011;"));
-  in = u_strcat(a, in, u_strnew(a, "b := 0200;"));
-  in = u_strcat(a, in, u_strnew(a, "c := 0.300;"));
-  in = u_strcat(a, in, u_strnew(a, "d := .400;"));
-  in = u_strcat(a, in, u_strnew(a, "e : (a: int, b: int) = (1, 2);"));
-  in = u_strcat(a, in, u_strnew(a, "f = e.a;"));
-
-  printf("== Lexer output ========\n\n");
-  Lexer* l = lexer_create(a, in);
-  string* out = lexer_to_string(a, l);
-  u_prints(out);
-
-  printf("\n\n== Lexer values ========\n\n");
-  for(int i = 0; i < lexer_get_len(l); i++)
+  for(int i = 2; i < argc; i++)
   {
-    Arena* b = arena_create();
-    string* out = lexer_get_value_at_index(b, l, i);
-    if (out) { u_prints(out); printf("\n"); }
-    arena_free(b);
+    if (strcmp(argv[i], "-l") == 0)      flags |= SHOW_LEXER;
+    else if (strcmp(argv[i], "-v") == 0) flags |= SHOW_VALUES;
+    else if (strcmp(argv[i], "-p") == 0) flags |= SHOW_PARSER;
+    else  usage();
   }
 
-  printf("\n\n== Parser ouput ========\n\n");
+  FILE* fp = fopen(argv[1], "r");
+  string* in = read_file(a, fp);
+
+  Lexer* l = lexer_create(a, in);
+  if (flags & SHOW_LEXER) {
+    printf("== Lexer output ============\n\n");
+    string* out = lexer_to_string(a, l);
+    u_prints(out);
+    printf("\n\n== End Lexer output ========\n\n");
+  }
+
+  if (flags & SHOW_VALUES) {
+    printf("\n\n== Lexer values ============\n\n");
+    for(int i = 0; i < lexer_get_len(l); i++)
+    {
+      Arena* b = arena_create();
+      printf("(%d", i);
+      string* out = lexer_get_value_at_index(b, l, i);
+      if (out) { printf(","); u_prints(out); printf(")"); }
+      else printf(")");
+      arena_free(b);
+    }
+    printf("\n\n== End Lexer values ========\n\n");
+  }
+
   Parser* p = parser_create(a, l);
-  out = parser_to_string(a, p);
-  u_prints(out);
+  if (flags & SHOW_PARSER) {
+    printf("\n\n== Parser ouput ============\n\n");
+    string* out = parser_to_string(a, p);
+    u_prints(out);
+    printf("\n== End Parser output========\n\n");
+  }
 
   arena_free(a);
   return 0;
