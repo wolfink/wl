@@ -56,8 +56,6 @@ typedef struct LexerOutput {
   char val[32];
 } LexerOutput;
 
-#define NUM_COMMANDS 12
-
 static LexerOutput test_commands_expected[NUM_COMMANDS][100] = {
   {
     { TokenType_ID, "x" },

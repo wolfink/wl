@@ -1,7 +1,8 @@
 #ifndef TEST_H
 #define TEST_H
 
-static char test_commands[12][100] = {
+#define NUM_COMMANDS 12
+static char test_commands[NUM_COMMANDS][100] = {
   "x: int = 1000;",
   "y: float = 1.200;",
   "z:(x: int, y: float)=>(ret: int);",
