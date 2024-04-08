@@ -1,6 +1,7 @@
 #include "ast.h"
 #include "parser_internal.h"
 #include "parser_shared.h"
+#include <parser.h>
 #include <stdarg.h>
 
 #define X(name, str) \
@@ -79,6 +80,13 @@ RULE_IMPL(BLOCK)
   SCAN(RBRACE);
 END_RULE
 
+RULE_IMPL(BLOCK_STMT)
+  if(NEXT_TOKEN == TokenType_IF) return RULE(BRANCH);
+  else if(NEXT_TOKEN == TokenType_SWITCH) return RULE(SWITCH);
+  else if(NEXT_TOKEN == TokenType_WHILE) return RULE(WHILE);
+  return RULE(DO);
+END_RULE
+
 RULE_IMPL(BRANCH)
   SCAN(IF);
   ROOT_APPEND(RULE(EXPR));
@@ -132,7 +140,8 @@ RULE_IMPL(EXPR)
   AST* a = NULL, *p = NULL;
   TokenType t = NEXT_TOKEN;
 
-  p = RULE(EXPR_OR);
+  if (FIRST(4, TokenType_IF, TokenType_FOR, TokenType_WHILE, TokenType_DO)) p = RULE(BLOCK_STMT);
+  else p = RULE(EXPR_OR);
   if (t == TokenType_ID) {
     if ((a = RULE(ASSIGN)) != NULL) {
       ROOT_APPEND(a);
@@ -140,7 +149,7 @@ RULE_IMPL(EXPR)
       ROOT_APPEND(RULE(EXPR));
       RETURN_ROOT;
     }
-  } 
+  }
   ROOT_APPEND(p);
 END_RULE
 
@@ -229,16 +238,9 @@ RULE_IMPL(STMT)
   if(FIRST(3, TokenType_ID, TokenType_NUMBER, TokenType_STAR)) {
     ROOT_APPEND(RULE(EXPR));
     SCAN(SEMI);
-  }
-  else if(FIRST(1, TokenType_IF)) ROOT_APPEND(RULE(BRANCH));
-  else if(FIRST(1, TokenType_SWITCH)) {
-    ROOT_APPEND(RULE(SWITCH));
-    SCAN(SEMI);
-  }
-  else if(FIRST(1, TokenType_WHILE)) ROOT_APPEND(RULE(WHILE));
-  else if(FIRST(1, TokenType_DO)) ROOT_APPEND(RULE(DO));
+  } else if (NEXT_TOKEN == TokenType_ENV) ROOT_APPEND(RULE(ENV));
   // TODO: handle CASE
-  else ROOT_APPEND(RULE(ENV));
+  else ROOT_APPEND(RULE(BLOCK_STMT));
 END_RULE
 
 RULE_IMPL(STMT_LIST)

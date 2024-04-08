@@ -1,7 +1,7 @@
 #ifndef TEST_H
 #define TEST_H
 
-#define NUM_COMMANDS 12
+#define NUM_COMMANDS 15
 static char test_commands[NUM_COMMANDS][100] = {
   "x: int = 1000;",
   "y: float = 1.200;",
@@ -14,7 +14,10 @@ static char test_commands[NUM_COMMANDS][100] = {
   "c := 0.300;",
   "d := .400;",
   "e : (a: int, b: int) = (1, 2);",
-  "f = e.a;"
+  "f = e.a;",
+  "i := 0; while i < 64 { f(i); i = i + 1; }",
+  "i: 1,2..64; f(i);",
+  "macro: #->() = { #->write(\"x: int = 1000\"); }; macro#;"
 };
 
 #endif

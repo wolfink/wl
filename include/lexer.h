@@ -1,12 +1,14 @@
 #ifndef LEXER_H
 #define LEXER_H
 
-#include "util.h"
+#include <stdlib.h>
 
 #ifndef LEXER_INTERNAL_H
 
-#include "../lexer/lexer_shared.h"
+#include "../src/lexer/lexer_shared.h"
 typedef void Lexer;
+typedef void Arena;
+typedef void string;
 
 #endif
 

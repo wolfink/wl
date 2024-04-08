@@ -2,8 +2,12 @@
 #define LEXER_TEST_H
 
 #include "../test.h"
-#include "../../src/include/util.h"
-#include "../../src/include/lexer.h"
+#include <util.h>
+#include <lexer.h>
+
+int test_command_ids[] = {
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+};
 
 
 //TODO: add X(COLON_ARROW, ":>")

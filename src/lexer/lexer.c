@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include <wctype.h>
+#include <string.h>
 
 string* token_type_tostr(Arena* a, TokenType t)
 {

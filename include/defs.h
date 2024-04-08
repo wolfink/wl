@@ -1,5 +1,3 @@
-#include<stdint.h>
-
 //typedef int8_t   i8;
 //typedef int16_t  i16;
 //typedef int32_t  i32;
@@ -18,3 +16,6 @@
 #define KB(num) 1024 * num
 #define MB(num) KB(1) * KB(1) * num
 #define GB(num) MB(1) * MB(1) * num
+
+#define NULL_CHECK(obj, fun)\
+if (obj == NULL) die("error: " #fun ": " #obj " is NULL\n");

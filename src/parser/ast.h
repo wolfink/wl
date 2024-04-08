@@ -18,13 +18,10 @@ typedef struct AST
 
 } AST;
 
+string* ast_to_string(Arena*, AST*, Lexer*, int indent);
+
 static AST zero = {
   0, 0, 0, 0, 0
 };
-
-AST* ast_create(Arena*, AST_Type);
-void ast_append(Arena*, AST*, AST*);
-int  ast_is_token(AST*);
-string* ast_to_string(Arena*, AST*, Lexer*, int indent);
 
 #endif

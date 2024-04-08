@@ -1,8 +1,8 @@
 #include<stdio.h>
 #include<string.h>
-#include"../../src/include/util.h"
-#include"../../src/include/lexer.h"
-#include"../../src/include/parser.h"
+#include<util.h>
+#include<lexer.h>
+#include<parser.h>
 #include"parser_test.h"
 
 int test_parser_solo()

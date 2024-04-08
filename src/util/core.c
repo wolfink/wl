@@ -1,6 +1,6 @@
-#include "util_internal.h"
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 // From suckless projects
 void die(const char* errstr, ...)

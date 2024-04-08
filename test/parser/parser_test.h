@@ -5,6 +5,10 @@ typedef struct {
   char* lines[100];
 } ParserOutput;
 
+int test_command_ids[] = {
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+};
+
 ParserOutput test_commands_expected[NUM_COMMANDS] = {
   {
     12,

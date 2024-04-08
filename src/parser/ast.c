@@ -1,10 +1,12 @@
 #include "ast.h"
 #include "parser_shared.h"
 #include <memory.h>
+#include <defs.h>
 
 AST* ast_create(Arena* arena, AST_Type type)
 {
-  if (!arena) return NULL;
+  NULL_CHECK(arena, ast_create)
+
   AST* ret = arena_alloc(arena, sizeof(AST));
   ret->type = type;
   ret->num_children = 0;
@@ -15,7 +17,9 @@ AST* ast_create(Arena* arena, AST_Type type)
 
 void ast_resize(Arena* arena, AST* ast, size_t new_size)
 {
-  if (!arena || !ast) return;
+  NULL_CHECK(ast, ast_resize);
+  NULL_CHECK(arena, ast_resize);
+
   if (new_size <= ast->size) return;
   AST** new_children = arena_alloc(arena, sizeof(AST*) * new_size);
   memcpy(new_children, ast->children, sizeof(AST*) * ast->size);
@@ -25,6 +29,9 @@ void ast_resize(Arena* arena, AST* ast, size_t new_size)
 
 void ast_append(Arena* arena, AST* dest, AST* src)
 {
+  NULL_CHECK(dest, ast_append);
+  NULL_CHECK(arena, ast_append);
+
   if (!arena || !dest || !src) return;
   if (dest->size == 0) ast_resize(arena, dest, 1);
   else if (dest->size == 1) ast_resize(arena, dest, 3);
@@ -34,8 +41,19 @@ void ast_append(Arena* arena, AST* dest, AST* src)
   dest->num_children++;
 }
 
-string* std_rule_to_string(Arena* context, const AST* tree, const string* src, const string* val, Lexer* lex, int indent)
+string* std_rule_to_string(Arena* context,
+                           const AST* tree,
+                           const string* src,
+                           const string* val,
+                           Lexer* lex,
+                           int indent)
 {
+  NULL_CHECK(context, std_rule_to_string)
+  NULL_CHECK(tree,    std_rule_to_string)
+  NULL_CHECK(src,     std_rule_to_string)
+  NULL_CHECK(val,     std_rule_to_string)
+  NULL_CHECK(lex,     std_rule_to_string)
+
   Arena* a = arena_create();
 
   string* ret;
@@ -57,8 +75,19 @@ string* std_rule_to_string(Arena* context, const AST* tree, const string* src, c
   return ret;
 }
 
-string* list_rule_to_string(Arena* context, const AST* tree, const string* src, const string* val, Lexer* lex, int indent)
+string* list_rule_to_string(Arena* context,
+                            const AST* tree,
+                            const string* src,
+                            const string* val,
+                            Lexer* lex,
+                            int indent)
 {
+  NULL_CHECK(context, list_rule_to_string)
+  NULL_CHECK(tree,    list_rule_to_string)
+  NULL_CHECK(src,     list_rule_to_string)
+  NULL_CHECK(val,     list_rule_to_string)
+  NULL_CHECK(lex,     list_rule_to_string)
+
   Arena* a = arena_create();
 
   string* ret;
@@ -78,6 +107,10 @@ string* list_rule_to_string(Arena* context, const AST* tree, const string* src, 
 // Handle empty string errors
 void ast_handle_str_error (Arena* a, AST* t, Lexer* l)
 {
+  NULL_CHECK(a, ast_handle_str_error)
+  NULL_CHECK(t, ast_handle_str_error)
+  NULL_CHECK(l, ast_handle_str_error)
+
   switch(t->type) {
 #define X(name, string) \
   case ASTType_##name: \
@@ -97,8 +130,53 @@ void ast_handle_str_error (Arena* a, AST* t, Lexer* l)
   }
 }
 
+AST* ast_get_child(AST* tree, size_t index)
+{
+  NULL_CHECK(tree, ast_get_child)
+
+  if (index > tree->num_children) {
+    die("error: ast_get_child: index is greater than number of children");
+  }
+  return tree->children[index];
+}
+
+void ast_set_child(AST* tree, size_t index, AST* value)
+{
+  NULL_CHECK(tree, ast_set_child)
+
+  if (tree == NULL) {
+    die("error: ast_get_type: NULL AST");
+  }
+  if (index > tree->num_children) {
+    die("error: ast_set_child: index is greater than number of children");
+  }
+  tree->children[index] = value;
+}
+
+int ast_get_type(AST* tree)
+{
+  NULL_CHECK(tree, ast_get_type)
+  return tree->type;
+}
+
+int  ast_is_token(AST* tree)
+{
+  NULL_CHECK(tree, ast_is_token)
+  return tree->type == ASTType_TOKEN;
+}
+
+size_t ast_get_num_children(AST* tree)
+{
+  NULL_CHECK(tree, ast_get_num_children)
+  return tree->num_children;
+}
+
 string* ast_to_string(Arena* context, AST* tree, Lexer* lex, int indent)
 {
+  NULL_CHECK(context, ast_to_string)
+  NULL_CHECK(tree,    ast_to_string)
+  NULL_CHECK(lex,     ast_to_string)
+
   Arena* a = arena_create();
 
   TokenType t;
@@ -147,6 +225,8 @@ string* ast_to_string(Arena* context, AST* tree, Lexer* lex, int indent)
       break;
     }
     break;
+  default:
+    break;
   }
 
   if (ret == NULL) ast_handle_str_error(context, tree, lex);
@@ -154,9 +234,4 @@ string* ast_to_string(Arena* context, AST* tree, Lexer* lex, int indent)
   ret = u_strcpyar(context, ret);
   arena_free(a);
   return ret;
-}
-
-int  ast_is_token(AST* ast)
-{
-  return ast->type == ASTType_TOKEN;
 }

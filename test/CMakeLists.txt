@@ -10,3 +10,7 @@ if(TEST_ALL OR TEST_PARSER)
   add_subdirectory(parser)
 endif()
 
+if(TEST_ALL OR TEST_GEN)
+  add_subdirectory(gen)
+endif()
+

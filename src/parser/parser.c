@@ -1,11 +1,10 @@
 #include "ast.h"
 #include "parser_internal.h"
-#include "../include/parser.h"
-#include "../include/defs.h"
-#include "../include/lexer.h"
+#include <parser.h>
+#include <defs.h>
+#include <lexer.h>
 
 #include "rules.h"
-#include <stdlib.h>
 
 void skip(Parser* p) { p->token_idx++; }
 
@@ -44,6 +43,7 @@ AST* scan(Arena* context, Parser* p, TokenType t)
     }
     die("expected: %s, got: %s\n", ts, nts);
   }
+  return NULL;
 }
 
 Parser* parser_create(Arena* context, Lexer* lexer)
@@ -53,6 +53,11 @@ Parser* parser_create(Arena* context, Lexer* lexer)
   parser->token_idx = 0;
   parser->tree = r_PROGRAM(context, parser);
   return parser;
+}
+
+AST* parser_get_ast(Parser* p)
+{
+  return p->tree;
 }
 
 string* parser_to_string(Arena* arena, Parser* p)

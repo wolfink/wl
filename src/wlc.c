@@ -1,11 +1,10 @@
-#include "include/parser.h"
-#include "include/util.h"
-#include "include/lexer.h"
-#include "include/defs.h"
 #include <stdio.h>
-#include <stdlib.h>
 #include <err.h>
 #include <string.h>
+#include <util.h>
+#include <parser.h>
+#include <lexer.h>
+#include <defs.h>
 
 string* read_file(Arena* context, FILE* fp)
 {

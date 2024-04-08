@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include "../../src/include/util.h"
+#include <util.h>
 
 int test_strcat()
 {

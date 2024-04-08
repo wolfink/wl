@@ -1,9 +1,8 @@
 #ifndef PARSER_INTERNAL_H
 #define PARSER_INTERNAL_H
 
-#include "../include/util.h"
-#include "../include/lexer.h"
-#include "parser_shared.h"
+#include <util.h>
+#include <lexer.h>
 #include "ast.h"
 
 typedef struct
