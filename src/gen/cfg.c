@@ -1,5 +1,6 @@
 #include <memory.h>
 #include <util.h>
+#include <defs.h>
 #include "cfg.h"
 
 #define CFG_DEFAULT_SIZE 10
@@ -16,6 +17,8 @@ ControlFlowGraph* cfg_create(Arena* context)
 
 void cfg_scan_ast(ControlFlowGraph* c, AST* in)
 {
+  NULL_CHECK(c, cfg_scan_ast)
+
   ControlFlowGraphNode* main_node = cfgn_create(c->memory);
   cfg_add_node(c, main_node);
   cfgn_populate(main_node, in);
@@ -23,6 +26,8 @@ void cfg_scan_ast(ControlFlowGraph* c, AST* in)
 
 void cfg_resize(ControlFlowGraph* cfg)
 {
+  NULL_CHECK(cfg, cfg_resize)
+
   if (cfg->len >= cfg->size) cfg->size *= 2;
   ControlFlowGraphNode** new_node_list = arena_alloc(cfg->memory, sizeof(ControlFlowGraphNode*) * cfg->size);
   memcpy(new_node_list, cfg->node_list, cfg->len);
@@ -31,6 +36,9 @@ void cfg_resize(ControlFlowGraph* cfg)
 
 void cfg_add_node(ControlFlowGraph* cfg, ControlFlowGraphNode* n)
 {
+  NULL_CHECK(cfg, cfg_add_node)
+  NULL_CHECK(n,   cfg_add_node)
+
   cfg_resize(cfg);
   cfg->node_list[cfg->len++] = n;
 }
@@ -41,6 +49,8 @@ void cfg_handle_branch(
   AST* branch_ast,
   AST* next_ast)
 {
+  NULL_CHECK(cfg, cfg_handle_branch)
+
   if (ast_get_type(branch_ast) != ASTType_BRANCH) {
     die("error: cfg_handle_branch: expected BRANCH stmt in cfg_handle_branch\n");
   }
@@ -92,6 +102,8 @@ void cfg_handle_do(
   AST* next_ast
 )
 {
+  NULL_CHECK(cfg,      cfg_handle_do)
+
   if (ast_get_type(do_ast) != ASTType_DO) {
     die("error: cfg_handle_do: expected DO stmt\n");
   }
@@ -111,6 +123,8 @@ void cfg_handle_while(
     AST* while_ast,
     AST* next_ast)
 {
+  NULL_CHECK(cfg, cfg_handle_while)
+
   if (ast_get_type(while_ast) != ASTType_WHILE) {
     die("error: cfg_handle_while: expected WHILE stmt\n");
   }
@@ -149,6 +163,8 @@ string* cfg_to_string(ControlFlowGraph* c)
 #define DEFAULT_CFGN_SIZE 2
 
 ControlFlowGraphNode* cfgn_create(ControlFlowGraph* c) {
+  NULL_CHECK(c, cfgn_create)
+
   ControlFlowGraphNode* ret = arena_alloc(c->memory, sizeof(ControlFlowGraphNode));
   ret->parent = c;
   ret->conn_len = 0;
@@ -159,6 +175,8 @@ ControlFlowGraphNode* cfgn_create(ControlFlowGraph* c) {
 
 void cfgn_resize_conn_list(ControlFlowGraphNode* n)
 {
+  NULL_CHECK(n, cfgn_resize_conn_list)
+
   if (n->conn_len >= n->conn_size) n->conn_size *= 2;
   size_t* new_cl = arena_alloc(n->parent->memory, sizeof(size_t) * n->conn_size);
   memcpy(new_cl, n->connection_list, n->conn_len);
@@ -167,6 +185,8 @@ void cfgn_resize_conn_list(ControlFlowGraphNode* n)
 
 void cfgn_resize_stmt_list(ControlFlowGraphNode* n)
 {
+  NULL_CHECK(n, cfgn_resize_stmt_list)
+
   if (n->stmt_len >= n->stmt_size) n->stmt_size *= 2;
   AST** new_sl = arena_alloc(n->parent->memory, sizeof(AST*) * n->stmt_size);
   memcpy(new_sl, n->stmts, n->stmt_len);
@@ -175,12 +195,16 @@ void cfgn_resize_stmt_list(ControlFlowGraphNode* n)
 
 void cfgn_add_connection(ControlFlowGraphNode* n, size_t index)
 {
+  NULL_CHECK(n, cfgn_add_connection)
+
   cfgn_resize_conn_list(n);
   n->connection_list[n->conn_len++] = index;
 }
 
 void cfgn_add_stmt(ControlFlowGraphNode* n, AST* stmt)
 {
+  NULL_CHECK(n, cfgn_add_stmt)
+
   if (ast_get_type(stmt) != ASTType_STMT) {
     die("error: cfgn_add_stmt: AST not of type STMT\n");
   }
@@ -190,12 +214,11 @@ void cfgn_add_stmt(ControlFlowGraphNode* n, AST* stmt)
 
 void cfgn_populate(ControlFlowGraphNode* n, AST* in)
 {
+  NULL_CHECK(n, cfgn_populate)
+
   ControlFlowGraph* c = n->parent;
   Arena* context = c->memory;
 
-  if (n == NULL) {
-    die("error: cfgn_populate: attempt to populate NULL CFG node\n");
-  }
   // Find STMT_LIST AST
   while (ast_get_num_children(in) > 0 && ast_get_type(in) != ASTType_STMT_LIST) {
     in = ast_get_child(in, 0);
