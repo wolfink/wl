@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "lexer_test.h"
+#include "../test.h"
 
 #define IS_ARG(str) strcmp(argv[1], str) == 0
 
@@ -42,12 +43,12 @@ int test_tokens()
 int test_commands_solo()
 {
   printf("Running test_commands_solo()\n");
-  for(int i = 0; i < NUM_COMMANDS; i++)
+  for(int i = 0; i < NUM_COMMANDS(test_command_ids); i++)
   {
-    printf("(%d/%d) ", i+1, NUM_COMMANDS);
-    printf("Testing command: \"%s\"...", test_commands[i]);
+    printf("(%d/%lu) ", i+1, NUM_COMMANDS(test_command_ids));
+    printf("Testing command: \"%s\"...", test_commands[test_command_ids[i]]);
     Arena* a = arena_create();
-    string* in = u_strnew(a, test_commands[i]);
+    string* in = u_strnew(a, test_commands[test_command_ids[i]]);
     Lexer* l = lexer_create(a, in);
     for (int j = 0; j < lexer_get_len(l); j++)
     {

@@ -1,7 +1,8 @@
 #ifndef TEST_H
 #define TEST_H
 
-#define NUM_COMMANDS sizeof(test_commands) / sizeof(char*)
+#define TOTAL_NUM_COMMANDS sizeof(test_commands) / sizeof(char*)
+#define NUM_COMMANDS(test_list) sizeof(test_list) / sizeof(size_t)
 static char* test_commands[] = {
   "x: int = 1000;",
   "y: float = 1.200;",

@@ -1,12 +1,11 @@
 #ifndef LEXER_TEST_H
 #define LEXER_TEST_H
 
-#include "../test.h"
 #include <util.h>
 #include <lexer.h>
 
-int test_command_ids[] = {
-  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+size_t test_command_ids[] = {
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
 };
 
 
@@ -60,7 +59,7 @@ typedef struct LexerOutput {
   char val[32];
 } LexerOutput;
 
-static LexerOutput test_commands_expected[NUM_COMMANDS][100] = {
+static LexerOutput test_commands_expected[][100] = {
   {
     { TokenType_ID, "x" },
     { TokenType_COLON, "" },

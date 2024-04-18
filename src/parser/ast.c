@@ -5,8 +5,6 @@
 
 AST* ast_create(Arena* arena, AST_Type type)
 {
-  NULL_CHECK(arena, ast_create)
-
   AST* ret = arena_alloc(arena, sizeof(AST));
   ret->type = type;
   ret->num_children = 0;
@@ -18,7 +16,6 @@ AST* ast_create(Arena* arena, AST_Type type)
 void ast_resize(Arena* arena, AST* ast, size_t new_size)
 {
   NULL_CHECK(ast, ast_resize);
-  NULL_CHECK(arena, ast_resize);
 
   if (new_size <= ast->size) return;
   AST** new_children = arena_alloc(arena, sizeof(AST*) * new_size);
@@ -29,8 +26,8 @@ void ast_resize(Arena* arena, AST* ast, size_t new_size)
 
 void ast_append(Arena* arena, AST* dest, AST* src)
 {
+  NULL_CHECK(src, ast_append);
   NULL_CHECK(dest, ast_append);
-  NULL_CHECK(arena, ast_append);
 
   if (!arena || !dest || !src) return;
   if (dest->size == 0) ast_resize(arena, dest, 1);
@@ -48,11 +45,7 @@ string* std_rule_to_string(Arena* context,
                            Lexer* lex,
                            int indent)
 {
-  NULL_CHECK(context, std_rule_to_string)
-  NULL_CHECK(tree,    std_rule_to_string)
-  NULL_CHECK(src,     std_rule_to_string)
-  NULL_CHECK(val,     std_rule_to_string)
-  NULL_CHECK(lex,     std_rule_to_string)
+  NULL_CHECK(tree, std_rule_to_string)
 
   Arena* a = arena_create();
 
@@ -82,11 +75,7 @@ string* list_rule_to_string(Arena* context,
                             Lexer* lex,
                             int indent)
 {
-  NULL_CHECK(context, list_rule_to_string)
   NULL_CHECK(tree,    list_rule_to_string)
-  NULL_CHECK(src,     list_rule_to_string)
-  NULL_CHECK(val,     list_rule_to_string)
-  NULL_CHECK(lex,     list_rule_to_string)
 
   Arena* a = arena_create();
 
@@ -107,9 +96,7 @@ string* list_rule_to_string(Arena* context,
 // Handle empty string errors
 void ast_handle_str_error (Arena* a, AST* t, Lexer* l)
 {
-  NULL_CHECK(a, ast_handle_str_error)
   NULL_CHECK(t, ast_handle_str_error)
-  NULL_CHECK(l, ast_handle_str_error)
 
   switch(t->type) {
 #define X(name, string) \
@@ -134,8 +121,8 @@ AST* ast_get_child(AST* tree, size_t index)
 {
   NULL_CHECK(tree, ast_get_child)
 
-  if (index > tree->num_children) {
-    die("error: ast_get_child: index is greater than number of children");
+  if (index >= tree->num_children) {
+    die("error: ast_get_child: index %d is greater than or equal to number of children\n", index);
   }
   return tree->children[index];
 }
@@ -145,10 +132,10 @@ void ast_set_child(AST* tree, size_t index, AST* value)
   NULL_CHECK(tree, ast_set_child)
 
   if (tree == NULL) {
-    die("error: ast_get_type: NULL AST");
+    die("error: ast_get_type: NULL AST\n");
   }
   if (index > tree->num_children) {
-    die("error: ast_set_child: index is greater than number of children");
+    die("error: ast_set_child: index %d is greater than or equal to number of children\n", index);
   }
   tree->children[index] = value;
 }

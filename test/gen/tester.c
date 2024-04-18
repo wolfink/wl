@@ -7,14 +7,16 @@
 #include<gen.h>
 #include"../../src/gen/cfg.h"
 #include"cfg_test.h"
+#include"../test.h"
 
 int test_cfg_solo()
 {
-  Arena* a = arena_create();
   int failed = 0;
 
-  for (int i = 0; i < sizeof(test_command_ids) / sizeof(int); i++)
+  for (int i = 0; i < NUM_COMMANDS(test_command_ids); i++)
   {
+    Arena* a = arena_create();
+
     string* in = u_strnew(a, test_commands[test_command_ids[i]]);
     string* exp = u_strnew(a, test_commands_expected[i]);
 
@@ -23,10 +25,11 @@ int test_cfg_solo()
     printf("\"...");
 
     Lexer* l = lexer_create(a, in);
+    // u_prints(lexer_to_string(a, l));
     Parser* p = parser_create(a, l);
     ControlFlowGraph* c = cfg_create(a);
     cfg_scan_ast(c, parser_get_ast(p));
-    string* out = cfg_to_string(c);
+    string* out = cfg_to_string(a, c, l);
 
     if (u_strcmp(out, exp) != 0) {
       failed = 1;
@@ -35,6 +38,8 @@ int test_cfg_solo()
       printf("\nExpected:\n");
       u_prints(exp);
     } else printf("Passed\n");
+
+    arena_free(a);
   }
 
   return failed;

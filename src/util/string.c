@@ -3,6 +3,15 @@
 #include <memory.h>
 #include <stdio.h>
 #include <string.h>
+#include <defs.h>
+
+string* u_stralloc(Arena* a, size_t len)
+{
+  size_t* size = arena_alloc(a, sizeof(size_t) + len);
+  string* ret = STR_PTR(size);
+  *size = len;
+  return ret;
+}
 
 string* u_strnew(Arena* a, const string* in)
 {
@@ -13,6 +22,18 @@ string* u_strnew(Arena* a, const string* in)
   string* ret = STR_PTR(size);
   memcpy(ret, in, len);
   *size = len;
+  return ret;
+}
+
+string*  u_strnnew(Arena* context, const char* src, size_t num_chars)
+{
+  NULL_CHECK(src, u_strnnew)
+
+  size_t len = max(sizeof(src), num_chars);
+  size_t* size_ptr = arena_alloc(context, sizeof(size_t) + len);
+  string* ret = STR_PTR(size_ptr);
+  memcpy(ret, src, len);
+  *size_ptr = len;
   return ret;
 }
 
@@ -73,6 +94,18 @@ string* u_strcat(Arena* arena, const string* restrict a, const string* restrict 
   *size = new_len;
 
   return ret;
+}
+
+string* u_strcats(Arena* context, const string* restrict a, const char* restrict b)
+{
+  NULL_CHECK(a, u_strcats)
+  NULL_CHECK(b, u_strcats)
+  Arena* local = arena_create();
+
+  string* b_str = u_strnew(local, b);
+
+  arena_free(local);
+  return u_strcat(context, a, b_str);
 }
 
 int u_strcmp(const string* a, const string* b)

@@ -91,7 +91,7 @@ int lexer_add_string_token(
     string* in,
     size_t start)
 {
-    Arena* lcl = arena_create();
+    Arena* local = arena_create();
     char temp[MAX_TOKEN_LEN];
     size_t index = start;
     size_t pos = 0;
@@ -104,8 +104,8 @@ int lexer_add_string_token(
       // Handle float period
     }
     temp[pos] = '\0';
-    lexer_add_token(context, lex, t, u_strnew(lcl, temp));
-    arena_free(lcl);
+    lexer_add_token(context, lex, t, u_strnew(local, temp));
+    arena_free(local);
     return index - 1;
 }
 
@@ -190,6 +190,12 @@ Lexer* lexer_create(Arena *context, string* in)
         case'b':
           index = lexer_add_string_token(context, lex, TokenType_BINARY, is_binary, in, index + 2);
           break;
+        case'.':
+          lexer_add_token(context, lex, TokenType_PERIOD, NULL);
+          index++;
+          break;
+        default:
+          index = lexer_add_string_token(context, lex, TokenType_NUMBER, is_digit, in, index);
         }
         break;
 
@@ -227,7 +233,7 @@ string* lexer_get_value_at_index(Arena* context, Lexer* lex, size_t index)
   switch(t)
   {
     case TokenType_ID: case TokenType_NUMBER: case TokenType_HEX: case TokenType_OCTAL: case TokenType_BINARY:
-      return u_strslice(context, lex->token_strings[index], strlen(token_type_str[t]) + 2, strlen(lex->token_strings[index]) - 1);
+      return u_strslice(context, lex->token_strings[index], strlen(token_type_str[t]) + 2, u_strlen(lex->token_strings[index]));
     default:
       return NULL;
   }
@@ -236,9 +242,9 @@ string* lexer_get_value_at_index(Arena* context, Lexer* lex, size_t index)
 TokenType lexer_get_token_type_at_index(Lexer* lex, size_t index)
 {
   if (index > lex->len) {
-    printf("lexer_get_token_type_at_index(lex = %p, index = %lu)", lex, index);
-    return TokenType_COUNT;
+    die("error: lexer_get_token_type_at_index(lex = %p, index = %lu): index out of range\n", lex, index);
   }
+  if (index == lex->len) return TokenType_EOF;
   return lex->tokens[index];
 }
 
@@ -250,7 +256,7 @@ size_t lexer_get_len(Lexer* lex)
 string* lexer_to_string(Arena* context, Lexer* lex)
 {
   Arena* a = arena_create();
-  char *builder = arena_alloc(a, lex->strlen + 1);
+  char *builder = arena_alloc(a, lex->strlen + 6);
   size_t pos = 0;
   for(size_t i = 0; i < lex->len; i++)
   {
@@ -260,7 +266,7 @@ string* lexer_to_string(Arena* context, Lexer* lex)
       builder[pos++] = u_getc(token, j);
     }
   }
-  builder[pos] = '\0';
+  strncpy(builder + pos, "(EOF)", 6);
   string* ret = u_strnew(context, builder);
 
   arena_free(a);

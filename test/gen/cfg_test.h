@@ -1,10 +1,10 @@
-#include "../test.h"
+#include<stdlib.h>
 
-int test_command_ids[] = {
-  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
+size_t test_command_ids[] = {
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
 };
 
-char *test_commands_expected[NUM_COMMANDS] = {
+char *test_commands_expected[] = {
   "0 => {EOF}:\n"
   "| EXPR\n"
   "| | ASSIGN\n"
@@ -12,9 +12,9 @@ char *test_commands_expected[NUM_COMMANDS] = {
   "| | | ID: x\n"
   "| | | TYPE\n"
   "| | | | ID: int\n"
-  "| | | EXPR\n"
-  "| | | | LITERAL\n"
-  "| | | | | NUMBER: 1000\n",
+  "| | EXPR\n"
+  "| | | LITERAL\n"
+  "| | | | NUMBER: 1000\n",
 
   "0 => {EOF}:\n"
   "| EXPR\n"
@@ -40,7 +40,7 @@ char *test_commands_expected[NUM_COMMANDS] = {
   "| | | | | | | VAR\n"
   "| | | | | | | | ID: x\n"
   "| | | | | | | | TYPE\n"
-  "| | | | | | | | | ID: i\n"
+  "| | | | | | | | | ID: int\n"
   "| | | | | | TTB_TYPE\n"
   "| | | | | | | VAR\n"
   "| | | | | | | | ID: y\n"
@@ -52,7 +52,7 @@ char *test_commands_expected[NUM_COMMANDS] = {
   "| | | | | | | VAR\n"
   "| | | | | | | | ID: ret\n"
   "| | | | | | | | TYPE\n"
-  "| | | | | | | | | id: i\n",
+  "| | | | | | | | | ID: int\n",
 
   "0 => {1, 2}:\n"
   "| EXPR\n"
@@ -94,8 +94,8 @@ char *test_commands_expected[NUM_COMMANDS] = {
   "| | | ID: x\n"
   "| | EXPR\n"
   "| | | LITERAL\n"
-  "| | | | NUMBER: 1\n",
-  "3 => {EOF}"
+  "| | | | NUMBER: 1\n"
+  "3 => {EOF}:\n",
 
   "0 => {EOF}:\n"
   "| EXPR\n"
@@ -205,34 +205,40 @@ char *test_commands_expected[NUM_COMMANDS] = {
 
   "0 => {1}:\n"
   "| EXPR\n"
-  "| | ASSIGN\n"
+  "| | COLON-ASSIGN\n"
   "| | VAR\n"
   "| | | ID: i\n"
   "| | EXPR\n"
   "| | | LITERAL\n"
   "| | | | NUMBER: 0\n"
-  "1 => {2, 3}"
+  "1 => {2, 3}:\n"
   "| EXPR\n"
   "| | EXPR_REL\n"
   "| | | VAR\n"
   "| | | | ID: i\n"
+  "| | | LANGLE\n"
   "| | | LITERAL\n"
   "| | | | NUMBER: 64\n"
-  "2 => {1}\n"
+  "2 => {1}:\n"
   "| EXPR\n"
   "| | CALL\n"
-  "| | | VAR: f\n"
+  "| | | VAR\n"
+  "| | | | ID: f\n"
   "| | | TUPLE\n"
   "| | | | TUPLE_BODY\n"
   "| | | | | EXPR\n"
-  "| | | | | | VAR: i"
+  "| | | | | | VAR\n"
+  "| | | | | | | ID: i\n"
   "| EXPR\n"
   "| | ASSIGN\n"
-  "| | | VAR: i\n"
-  "| | | EXPR\n"
-  "| | | | EXPR_SUM\n"
-  "| | | | | VAR: i\n"
-  "| | | | | LITERAL\n"
-  "| | | | | | NUMBER: 1\n"
-  "3 => {EOF}\n"
+  "| | VAR\n"
+  "| | | ID: i\n"
+  "| | EXPR\n"
+  "| | | EXPR_SUM\n"
+  "| | | | VAR\n"
+  "| | | | | ID: i\n"
+  "| | | | PLUS\n"
+  "| | | | LITERAL\n"
+  "| | | | | NUMBER: 1\n"
+  "3 => {EOF}:\n"
 };
