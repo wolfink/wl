@@ -73,9 +73,10 @@ int main(int argc, char** argv)
   }
 
   Parser* p = parser_create(a, l);
+  AST* ast = parser_generate_ast(p);
   if (flags & SHOW_PARSER) {
     printf("\n\n== Parser ouput ============\n\n");
-    string* out = parser_to_string(a, p);
+    string* out = ast_to_string(a, ast, 0);
     u_prints(out);
     printf("\n== End Parser output========\n\n");
   }

@@ -16,7 +16,8 @@ int test_parser_solo()
     string* in = u_strnew(a, test_commands[test_command_ids[i]]);
     Lexer* l = lexer_create(a, in);
     Parser* p = parser_create(a, l);
-    string* out = parser_to_string(a, p);
+    AST* ast = parser_generate_ast(p);
+    string* out = ast_to_string(a, ast, 0);
     string* exp = u_strnew(a, test_commands_expected[i]);
     if (u_strcmp(out, exp) != 0) {
       failed = 1;

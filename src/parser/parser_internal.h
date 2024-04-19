@@ -7,9 +7,9 @@
 
 typedef struct
 {
+  Arena* context;
   size_t token_idx;
   Lexer* lexer;
-  AST* tree;
 } Parser;
 
 AST* scan(Arena*, Parser*, TokenType);

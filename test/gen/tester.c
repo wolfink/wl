@@ -27,8 +27,9 @@ int test_cfg_solo()
     Lexer* l = lexer_create(a, in);
     // u_prints(lexer_to_string(a, l));
     Parser* p = parser_create(a, l);
+    AST* ast = parser_generate_ast(p);
     ControlFlowGraph* c = cfg_create(a);
-    cfg_scan_ast(c, parser_get_ast(p));
+    cfg_scan_ast(c, ast);
     string* out = cfg_to_string(a, c);
 
     if (u_strcmp(out, exp) != 0) {

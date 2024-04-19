@@ -49,18 +49,13 @@ AST* scan(Arena* context, Parser* p, TokenType t)
 Parser* parser_create(Arena* context, Lexer* lexer)
 {
   Parser *parser = arena_alloc(context, sizeof(Parser));
+  parser->context = context;
   parser->lexer = lexer;
   parser->token_idx = 0;
-  parser->tree = r_PROGRAM(context, parser);
   return parser;
 }
 
-AST* parser_get_ast(Parser* p)
+AST* parser_generate_ast(Parser* p)
 {
-  return p->tree;
-}
-
-string* parser_to_string(Arena* arena, Parser* p)
-{
-  return ast_to_string(arena, p->tree, 0);
+  return r_PROGRAM(p->context, p);
 }

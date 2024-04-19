@@ -15,8 +15,7 @@ typedef void string;
 #endif
 
 Parser*  parser_create(Arena*, Lexer*);
-AST*     parser_get_ast(Parser*);
-string*  parser_to_string(Arena*, Parser*);
+AST*     parser_generate_ast(Parser*);
 
 extern AST* ast_create(Arena*, ASTType, Lexer*);
 extern void ast_append(Arena*, AST*, AST*);
