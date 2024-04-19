@@ -29,7 +29,7 @@ int test_cfg_solo()
     Parser* p = parser_create(a, l);
     ControlFlowGraph* c = cfg_create(a);
     cfg_scan_ast(c, parser_get_ast(p));
-    string* out = cfg_to_string(a, c, l);
+    string* out = cfg_to_string(a, c);
 
     if (u_strcmp(out, exp) != 0) {
       failed = 1;

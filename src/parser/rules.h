@@ -12,7 +12,7 @@
 // Helper Macros and Functions ==========================================
 
 #define BRANCH_APPEND(tree, branch) ast_append(arena, tree, branch)
-#define BRANCH_CREATE(type) ast_create(arena, ASTType_##type)
+#define BRANCH_CREATE(type) ast_create(arena, ASTType_##type, parser->lexer)
 #define CHECK_SCAN(token) ((NEXT_TOKEN == TokenType_##token) ? SCAN(token) : NULL)
 #define END_RULE return tree; }
 #define FIRST(n, ...) first(next_token(parser), n, __VA_ARGS__)
@@ -35,7 +35,7 @@
   END_RULE
 #define RULE_IMPL(name)\
   AST* r_##name(Arena* arena, Parser* parser) {\
-    AST* tree = ast_create(arena, ASTType_##name);
+    AST* tree = ast_create(arena, ASTType_##name, parser->lexer);
 #define RULE_OP(name, n, ...)\
   RULE_IMPL(name)\
     return scan_op(arena, parser, n, __VA_ARGS__);\

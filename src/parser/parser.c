@@ -10,7 +10,7 @@ void skip(Parser* p) { p->token_idx++; }
 
 AST* scan(Arena* context, Parser* p, TokenType t)
 {
-  AST* tree = ast_create(context, ASTType_TOKEN);
+  AST* tree = ast_create(context, ASTType_TOKEN, p->lexer);
   tree->token_num = p->token_idx;
 
   TokenType nt = next_token(p);
@@ -62,5 +62,5 @@ AST* parser_get_ast(Parser* p)
 
 string* parser_to_string(Arena* arena, Parser* p)
 {
-  return ast_to_string(arena, p->tree, p->lexer, 0);
+  return ast_to_string(arena, p->tree, 0);
 }

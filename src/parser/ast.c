@@ -3,10 +3,11 @@
 #include <memory.h>
 #include <defs.h>
 
-AST* ast_create(Arena* arena, AST_Type type)
+AST* ast_create(Arena* arena, ASTType type, Lexer* lex)
 {
   AST* ret = arena_alloc(arena, sizeof(AST));
   ret->type = type;
+  ret->lexer = lex;
   ret->num_children = 0;
   ret->size = 0;
   ret->token_num = 0;
@@ -54,14 +55,8 @@ string* std_rule_to_string(Arena* context,
   ret = u_strcat(a, ret, u_strnew(context, "\n"));
   for(int i = 0; i < tree->num_children; i++)
   {
-    string* child = ast_to_string(a, tree->children[i], lex, indent + 1);
-    //printf("=== Before ===\n");
-    //u_prints(child);
-    //printf("\nchild size: %lu, ret size: %lu\n", u_strlen(child), u_strlen(ret));
+    string* child = ast_to_string(a, tree->children[i], indent + 1);
     ret = u_strcat(a, ret, child);
-    //printf("=== After ===\n");
-    //u_prints(ret);
-    //printf("\nchild size: %lu, ret size: %lu\n", u_strlen(child), u_strlen(ret));
   } 
   ret = u_strcpyar(context, ret);
   arena_free(a);
@@ -83,7 +78,7 @@ string* list_rule_to_string(Arena* context,
   ret = u_strcat(a, src, val);
   ret = u_strcat(a, ret, u_strnew(a, "\n"));
   while(tree->num_children > 0) {
-    ret = u_strcat(a, ret, ast_to_string(a, tree->children[0], lex, indent + 1));
+    ret = u_strcat(a, ret, ast_to_string(a, tree->children[0], indent + 1));
     if (tree->num_children < 2) break;
     tree = tree->children[1];
   }
@@ -158,11 +153,11 @@ size_t ast_get_num_children(AST* tree)
   return tree->num_children;
 }
 
-string* ast_to_string(Arena* context, AST* tree, Lexer* lex, int indent)
+string* ast_to_string(Arena* context, AST* tree, int indent)
 {
-  NULL_CHECK(context, ast_to_string)
   NULL_CHECK(tree,    ast_to_string)
-  NULL_CHECK(lex,     ast_to_string)
+
+  Lexer* lex = tree->lexer;
 
   Arena* a = arena_create();
 
@@ -207,7 +202,7 @@ string* ast_to_string(Arena* context, AST* tree, Lexer* lex, int indent)
       ret = u_strcat(a, ret, u_strnew(a, "\n"));
       for(int i = 0; i < tree->num_children; i++)
       {
-        ret = u_strcat(a, ret, ast_to_string(a, tree->children[i], lex, indent + 1));
+        ret = u_strcat(a, ret, ast_to_string(a, tree->children[i], indent + 1));
       }
       break;
     }

@@ -197,14 +197,14 @@ size_t cfg_handle_while(ControlFlowGraph* cfg, AST* while_ast)
   return next_idx;
 }
 
-string* cfg_to_string(Arena* context, ControlFlowGraph* c, Lexer* lex)
+string* cfg_to_string(Arena* context, ControlFlowGraph* c)
 {
   Arena* local = arena_create();
   string* ret = u_strnew(local, "");
 
   for (size_t node = 0; node < c->len; node++)
   {
-    ret = u_strcat(local, ret, cfgn_to_string(local, c->node_list[node], lex, node));
+    ret = u_strcat(local, ret, cfgn_to_string(local, c->node_list[node], node));
   }
   ret = u_strcpyar(context, ret);
 
@@ -281,7 +281,7 @@ void cfgn_add_stmt(ControlFlowGraphNode* n, AST* stmt)
 
 int cfgn_is_eof(ControlFlowGraphNode* n) { return n->stmt_len == 0; }
 
-string* cfgn_to_string(Arena* context, ControlFlowGraphNode* n, Lexer* lex, size_t index)
+string* cfgn_to_string(Arena* context, ControlFlowGraphNode* n, size_t index)
 {
   Arena* local = arena_create();
 
@@ -302,10 +302,10 @@ string* cfgn_to_string(Arena* context, ControlFlowGraphNode* n, Lexer* lex, size
 
   if (n->stmt_len > 0) {
     Arena* body = arena_create();
-    string* node_body = ast_to_string(body, n->stmts[0], lex, 1);
+    string* node_body = ast_to_string(body, n->stmts[0], 1);
 
     for (int stmt = 1; stmt < n->stmt_len; stmt++) {
-      node_body = u_strcat(body, node_body, ast_to_string(local, n->stmts[stmt], lex, 1));
+      node_body = u_strcat(body, node_body, ast_to_string(local, n->stmts[stmt], 1));
     }
     ret = u_strcat(context, ret, node_body);
 

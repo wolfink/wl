@@ -18,9 +18,9 @@ Parser*  parser_create(Arena*, Lexer*);
 AST*     parser_get_ast(Parser*);
 string*  parser_to_string(Arena*, Parser*);
 
-extern AST* ast_create(Arena*, AST_Type);
+extern AST* ast_create(Arena*, ASTType, Lexer*);
 extern void ast_append(Arena*, AST*, AST*);
-extern string* ast_to_string(Arena*, AST*, Lexer*, int indent);
+extern string* ast_to_string(Arena*, AST*, int indent);
 extern int  ast_is_token(AST*);
 extern size_t ast_get_num_children(AST*);
 extern AST*  ast_get_child(AST*, size_t);

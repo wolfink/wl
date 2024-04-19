@@ -80,6 +80,6 @@ typedef enum
   ASTType_NUMBER,
   ASTType_TOKEN,
   ASTType_COUNT,
-} AST_Type;
+} ASTType;
 
 #endif
