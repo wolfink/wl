@@ -2,13 +2,12 @@
 #define LEXER_H
 
 #include <stdlib.h>
+#include <util.h>
 
 #ifndef LEXER_INTERNAL_H
 
 #include "../src/lexer/lexer_shared.h"
 typedef void Lexer;
-typedef void Arena;
-typedef void string;
 
 #endif
 

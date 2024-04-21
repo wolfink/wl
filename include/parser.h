@@ -2,15 +2,14 @@
 #define PARSER_H
 
 #include <stdlib.h>
+#include <util.h>
+#include <lexer.h>
 
 #ifndef PARSER_INTERNAL_H
 
 #include "../src/parser/parser_shared.h"
 typedef void Parser;
 typedef void AST;
-typedef void Lexer;
-typedef void Arena;
-typedef void string;
 
 #endif
 

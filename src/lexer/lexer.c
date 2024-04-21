@@ -166,7 +166,16 @@ Lexer* lexer_create(Arena *context, string* in)
 #define TOKEN_SIZE 2
     switch(*str_int & (T(-1) >> 8 * 6))
     {
-      TokenTypeTable2
+    TokenTypeTable2
+    case CHAR_SUM_2('/', '/'):
+      index += 2;
+      while(index < u_strlen(in) && in[++index] != '\n'); // Move index past the end of the line
+      continue;
+    case CHAR_SUM_2('/', '*'):
+      index += 2;
+      while(index < u_strlen(in) - 1
+            && !(in[++index] == '*' && in[index] == '/')); // Move index past "*/" string
+      continue;
     }
 #undef TOKEN_SIZE
 
@@ -208,8 +217,8 @@ Lexer* lexer_create(Arena *context, string* in)
             //TODO: raise error invalid suffix 
           }
           index = lexer_add_string_token(context, lex, TokenType_NUMBER, is_digit, in, index);
-        } else if (isalpha(c)) {
-          index = lexer_add_string_token(context, lex, TokenType_ID, is_alnum, in, index);
+        } else if (isalpha(c) || c == '_' || c == '?') {
+          index = lexer_add_string_token(context, lex, TokenType_ID, is_idchar, in, index);
         }
     }
 #undef X

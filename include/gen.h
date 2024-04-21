@@ -1,12 +1,10 @@
 #ifndef GEN_H
 #define GEN_H
 
+#include <util.h>
+#include <parser.h>
 
 #ifndef GEN_INTERNAL_H
-
-typedef void Parser;
-typedef void Arena;
-typedef void string;
 
 #endif
 

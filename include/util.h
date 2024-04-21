@@ -6,8 +6,9 @@
 
 #ifndef UTIL_INTERNAL_H
 typedef void Arena;
-typedef void string;
 #endif
+
+typedef char string;
 
 #define ARENA_MAX_SIZE MB(1)
 
@@ -15,6 +16,7 @@ typedef int (*CTypeFunction)(char);
 
 static inline int is_alpha(char c)  { return isalpha(c); }
 static inline int is_alnum(char c)  { return isalnum(c); }
+static inline int is_idchar(char c) { return isalnum(c) || c == '_' || c == '?'; }
 static inline int is_digit(char c)  { return isdigit(c); }
 static inline int is_float(char c)  { return isdigit(c); }
 static inline int is_binary(char c) { return (c == '0' || c == '1'); }
