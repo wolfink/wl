@@ -6,14 +6,15 @@
 
 #include "rules.h"
 
-void skip(Parser* p) { p->token_idx++; }
+void skip(Parser* p) { parser_next_token(p); }
 
 AST* scan(Arena* context, Parser* p, TokenType t)
 {
   AST* tree = ast_create(context, ASTType_TOKEN, p->lexer);
-  tree->token_num = p->token_idx;
+  tree->token_line = p->line_no;
+  tree->token_idx = p->token_idx;
 
-  TokenType nt = next_token(p);
+  TokenType nt = parser_next_token(p)->type;
   if (nt == t) {
     skip(p);
     return tree;
@@ -52,7 +53,17 @@ Parser* parser_create(Arena* context, Lexer* lexer)
   parser->context = context;
   parser->lexer = lexer;
   parser->token_idx = 0;
+  parser->line_no = 0;
   return parser;
+}
+
+const Token* parser_next_token(Parser* p)
+{
+  if (p->token_idx >= lexer_get_line_len(p->lexer, p->line_no)) {
+    p->line_no++;
+    p->token_idx = 0;
+  }
+  return lexer_get_token(p->lexer, p->line_no, p->token_idx++);
 }
 
 AST* parser_generate_ast(Parser* p)

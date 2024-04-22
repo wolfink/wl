@@ -9,10 +9,12 @@ typedef struct
 {
   Arena* context;
   size_t token_idx;
+  size_t line_no;
   Lexer* lexer;
 } Parser;
 
 AST* scan(Arena*, Parser*, TokenType);
-TokenType next_token(Parser* p) { return lexer_get_token_type_at_index(p->lexer, p->token_idx); }
+// TokenType next_token(Parser* p) { return lexer_get_token_type_at_index(p->lexer, p->token_idx); }
+const Token* parser_next_token(Parser* p);
 
 #endif

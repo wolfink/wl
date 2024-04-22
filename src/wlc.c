@@ -60,14 +60,16 @@ int main(int argc, char** argv)
 
   if (flags & SHOW_VALUES) {
     printf("\n\n== Lexer values ============\n\n");
-    for(int i = 0; i < lexer_get_len(l); i++)
+    for(int i = 0; i < lexer_get_num_lines(l); i++)
     {
-      Arena* b = arena_create();
-      printf("(%d", i);
-      string* out = lexer_get_value_at_index(b, l, i);
-      if (out) { printf(","); u_prints(out); printf(")"); }
-      else printf(")");
-      arena_free(b);
+      for (int j = 0; j < lexer_get_line_len(l, i); j++) {
+        Arena* b = arena_create();
+        printf("(%d", i);
+        const string* out = lexer_get_token(l, i, j)->value;
+        if (out) { printf(","); u_prints(out); printf(")"); }
+        else printf(")");
+        arena_free(b);
+      }
     }
     printf("\n\n== End Lexer values ========\n\n");
   }

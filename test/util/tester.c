@@ -90,6 +90,40 @@ int test_arena_alloc()
   return 0;
 }
 
+vector_template(int);
+vector_impl(int, 100);
+
+vector_template(object);
+vector_impl(object, 50);
+
+typedef struct point { int x; int y; } point;
+
+int test_vector_create()
+{
+  Arena* a = arena_create();
+  vector_int* vi = vector_create(int)(a);
+  vector_object* vs = vector_create(object)(a);
+  vector_object* vp = vector_create(object)(a);
+  if (vi->len != 0 || vs->len != 0 || vp->len != 0) return 1;
+  if (vi->size != 100 || vs->size != 50 || vp->size != 50) return 2;
+  if (vi->mem != a || vs->mem != a || vp->mem != a) return 3;
+  int i = vi->values[0];
+  string* s = vs->values[0];
+  point* p = vp->values[0];
+  return 0;
+}
+
+int test_vector_add()
+{
+  Arena* a = arena_create();
+  vector_int* vi = vector_create(int)(a);
+  for (int i = 0; i < 1000000; i++) {
+    vector_add(int)(vi, i);
+    if (vi->values[i] != i) return 1;
+  }
+  return 0;
+}
+
 int main(int argc, char** argv)
 {
   if (argc < 2) return 1;
@@ -97,5 +131,7 @@ int main(int argc, char** argv)
   if (strcmp(argv[1], "arena_init") == 0) return test_arena_init();
   if (strcmp(argv[1], "strnew") == 0) return test_strnew();
   if (strcmp(argv[1], "strcat") == 0) return test_strcat();
+  if (strcmp(argv[1], "vector_create") == 0) return test_vector_create();
+  if (strcmp(argv[1], "vector_add") == 0) return test_vector_add();
   return 1;
 }

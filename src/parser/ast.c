@@ -10,7 +10,8 @@ AST* ast_create(Arena* arena, ASTType type, Lexer* lex)
   ret->lexer = lex;
   ret->num_children = 0;
   ret->size = 0;
-  ret->token_num = 0;
+  ret->token_idx = 0;
+  ret->token_line = 0;
   return ret;
 }
 
@@ -101,11 +102,11 @@ void ast_handle_str_error (Arena* a, AST* t, Lexer* l)
 #undef X
   case ASTType_TOKEN:
 #define X(name, string, first)
-    die("NULL string at type: TOKEN, value: %s\n", lexer_get_value_at_index(a, l, t->token_num));
+    die("NULL string at type: TOKEN, value: %s\n", lexer_get_token(l, t->token_line, t->token_idx)->value);
 #undef X
   case ASTType_NUMBER:
 #define X(name, string, first)
-    die("NULL string at type: NUMBER, value: %s\n", lexer_get_value_at_index(a, l, t->token_num));
+    die("NULL string at type: NUMBER, value: %s\n", lexer_get_token(l, t->token_line, t->token_idx)->value);
 #undef X
   default:
     die("NULL string at type: ID\n");
@@ -181,7 +182,7 @@ string* ast_to_string(Arena* context, AST* tree, int indent)
   ListRules
 #undef X
   case ASTType_TOKEN:
-    t = lexer_get_token_type_at_index(lex, tree->token_num);
+    t = lexer_get_token(lex, tree->token_line, tree->token_idx)->type;
     switch(t) {
 #define X(name, first, str) \
     case TokenType_##name: \
@@ -195,7 +196,7 @@ string* ast_to_string(Arena* context, AST* tree, int indent)
     {
     case TokenType_ID: case TokenType_NUMBER: case TokenType_HEX: case TokenType_OCTAL: case TokenType_BINARY:
       ret = u_strcat(a, ret, u_strnew(a, ": "));
-      ret = u_strcat(a, ret, lexer_get_value_at_index(a, lex, tree->token_num));
+      ret = u_strcat(a, ret, lexer_get_token(lex, tree->token_line, tree->token_idx)->value);
       ret = u_strcat(a, ret, u_strnew(a, "\n"));
       break;
     default:

@@ -21,30 +21,34 @@ string* token_type_tostr(Arena* a, TokenType t)
   }
 }
 
+vector_impl(Token, 100)
+vector_impl(object, 100)
+
 Lexer* lexer_new(Arena* a)
 {
   Lexer* ret = arena_alloc(a, sizeof(Lexer));
-  ret->tokens = arena_alloc(a, sizeof(TokenType) * LEXER_DEFAULT_SIZE);
-  ret->token_strings = arena_alloc(a, sizeof(string) * LEXER_DEFAULT_SIZE);
-  ret->size = LEXER_DEFAULT_SIZE;
-  ret->len = 0;
-  ret->strlen = 0;
+  ret->lines = vector_object_create(a);
+  // ret->tokens = arena_alloc(a, sizeof(TokenType) * LEXER_DEFAULT_SIZE);
+  // ret->token_strings = arena_alloc(a, sizeof(string) * LEXER_DEFAULT_SIZE);
+  // ret->size = LEXER_DEFAULT_SIZE;
+  // ret->len = 0;
+  // ret->strlen = 0;
   return ret;
 }
 
 // TODO: fix function
-int lexer_resize(Arena* a, Lexer* lex, size_t new_size)
-{
-  string** new_token_strings = arena_alloc(a, sizeof(string*) * new_size);
-  TokenType* new_tokens = arena_alloc(a, sizeof(TokenType) * new_size);
-  if (!new_token_strings || !new_tokens) return 1;
+// int lexer_resize(Arena* a, Lexer* lex, size_t new_size)
+// {
+//   string** new_token_strings = arena_alloc(a, sizeof(string*) * new_size);
+//   TokenType* new_tokens = arena_alloc(a, sizeof(TokenType) * new_size);
+//   if (!new_token_strings || !new_tokens) return 1;
 
-  memcpy(new_token_strings, lex->token_strings, lex->size);
-  memcpy(new_tokens, lex->tokens, lex->size);
-  lex->token_strings = new_token_strings;
-  lex->tokens = new_tokens;
-  return 0;
-}
+//   memcpy(new_token_strings, lex->token_strings, lex->size);
+//   memcpy(new_tokens, lex->tokens, lex->size);
+//   lex->token_strings = new_token_strings;
+//   lex->tokens = new_tokens;
+//   return 0;
+// }
 
 string* lexer_next_token(string* in)
 {
@@ -60,22 +64,29 @@ int lexer_add_token(
   Arena* a = arena_create();
   if (!a) return 1;
 
-  string* worker;
-  int pos = 0;
+  // string* out;
+  // int pos = 0;
 
-  worker = u_strnew(a, "(");
-  worker = u_strcat(a, worker, u_strnew(a, token_type_str[t]));
-  if (data != NULL)
-    worker = u_strcat(a, worker, u_strnew(a, ","));
-  worker = u_strcat(a,
-      (data) ? u_strcat(a, worker, data): worker,
-      u_strnew(a, ")"));
+  // out = u_strnew(a, "(");
+  // out = u_strcat(a, out, u_strnew(a, token_type_str[t]));
+  // if (data != NULL)
+  //   out = u_strcat(a, out, u_strnew(a, ","));
+  // out = u_strcat(a,
+  //     (data) ? u_strcat(a, out, data): out,
+  //     u_strnew(a, ")"));
 
-  if (lex->len > lex->size) lexer_resize(context, lex, lex->size * 2);
-  worker = u_strcpyar(context, worker);
-  lex->token_strings[lex->len] = worker;
-  lex->tokens[lex->len++] = t;
-  lex->strlen += u_strlen(worker);
+  // if (lex->len > lex->size) lexer_resize(context, lex, lex->size * 2);
+  // out = u_strcpyar(context, out);
+  Line* curr_line = lex->lines->values[lex->curr_line];
+  if (curr_line == NULL) {
+    curr_line = vector_Token_create(lex->lines->mem);
+    vector_object_add(lex->lines, curr_line);
+  }
+  Token new_token = {t, data};
+  vector_Token_add(curr_line, new_token);
+  // lex->token_strings[lex->len] = out;
+  // lex->tokens[lex->len++] = t;
+  // lex->strlen += u_strlen(out);
 
   arena_free(a);
   return 0;
@@ -114,6 +125,8 @@ Lexer* lexer_create(Arena *context, string* in)
   Arena *a = arena_create();
   if(!a) return NULL;
   Lexer* lex = lexer_new(context);
+  lex->curr_line = 0;
+  vector_object_add(lex->lines, vector_Token_create(context));
   if (u_strlen(in) == 0) return NULL;
 
   for(int index = 0; index < u_strlen(in); index++)
@@ -170,11 +183,19 @@ Lexer* lexer_create(Arena *context, string* in)
     case CHAR_SUM_2('/', '/'):
       index += 2;
       while(index < u_strlen(in) && in[++index] != '\n'); // Move index past the end of the line
+      lex->curr_line++;
+      vector_object_add(lex->lines, vector_Token_create(context));
       continue;
     case CHAR_SUM_2('/', '*'):
       index += 2;
+      // Move index past "*/" string
       while(index < u_strlen(in) - 1
-            && !(in[++index] == '*' && in[index] == '/')); // Move index past "*/" string
+            && !(in[++index] == '*' && in[index] == '/')) {
+        if (in[index] == '\n') {
+          lex->curr_line++;
+          vector_object_add(lex->lines, vector_Token_create(context));
+        }
+      }; 
       continue;
     }
 #undef TOKEN_SIZE
@@ -207,6 +228,9 @@ Lexer* lexer_create(Arena *context, string* in)
           index = lexer_add_string_token(context, lex, TokenType_NUMBER, is_digit, in, index);
         }
         break;
+      case '\n': 
+        lex->curr_line++;
+        vector_object_add(lex->lines, vector_Token_create(context));
 
       default:
         if (isdigit(c)) {
@@ -232,52 +256,116 @@ Lexer* lexer_create(Arena *context, string* in)
   return lex;
 }
 
-string* lexer_get_value_at_index(Arena* context, Lexer* lex, size_t index)
+// string* lexer_get_value(Arena* context, Lexer* lex, size_t line, size_t index)
+// {
+//   if (index > lex->lines->len) {
+//     printf("lexer_get_value_at_index(context = %p, lex = %p, index = %lu): index value too large\n", context, context, index);
+//     return u_strnew(context, "");
+//   }
+//   TokenType t = lex->lines->values[line]->values[index].type;
+//   switch(t)
+//   {
+//     case TokenType_ID: case TokenType_NUMBER: case TokenType_HEX: case TokenType_OCTAL: case TokenType_BINARY: {
+//       const string* value = lex->lines->values[line].values[index].value;
+//       return u_strslice(context, value, strlen(token_type_str[t]) + 2, u_strlen(value));
+//     }
+//     default:
+//       return NULL;
+//   }
+// }
+
+// TokenType lexer_get_token_type(Lexer* lex, size_t line_no, size_t index)
+// {
+//   if (line_no > lex->lines->len) {
+//     die("error: lexer_get_token_type_at_index(lex = %p, line = %lu, index = %lu): line out of range\n", lex, line_no, index);
+//   }
+//   const Line* line = &lex->lines->values[index];
+//   if (index > line->len) {
+//     die("error: lexer_get_token_type_at_index(lex = %p, line = %lu, index = %lu): index out of range\n", lex, line, index);
+//   }
+//   if (index == lex->lines->len) return TokenType_EOF;
+//   return line->values[index].type;
+// }
+
+const Token* lexer_get_token(Lexer* lex, size_t line_no, size_t index)
 {
-  if (index > lex->strlen) {
-    printf("lexer_get_value_at_index(context = %p, lex = %p, index = %lu): index value too large\n", context, context, index);
-    return u_strnew(context, "");
-  }
-  TokenType t = lex->tokens[index];
-  switch(t)
-  {
-    case TokenType_ID: case TokenType_NUMBER: case TokenType_HEX: case TokenType_OCTAL: case TokenType_BINARY:
-      return u_strslice(context, lex->token_strings[index], strlen(token_type_str[t]) + 2, u_strlen(lex->token_strings[index]));
-    default:
-      return NULL;
-  }
+  Line* line = lex->lines->values[line_no];
+  return &line->values[index];
 }
 
-TokenType lexer_get_token_type_at_index(Lexer* lex, size_t index)
+size_t lexer_get_num_lines(Lexer* lex)
 {
-  if (index > lex->len) {
-    die("error: lexer_get_token_type_at_index(lex = %p, index = %lu): index out of range\n", lex, index);
-  }
-  if (index == lex->len) return TokenType_EOF;
-  return lex->tokens[index];
+  return lex->lines->len;
 }
 
-size_t lexer_get_len(Lexer* lex)
+size_t lexer_get_line_len(Lexer* lex, size_t line_no)
 {
-  return lex->len;
+  Line* line = lex->lines->values[line_no];
+  return line->len;
 }
 
 string* lexer_to_string(Arena* context, Lexer* lex)
 {
   Arena* a = arena_create();
-  char *builder = arena_alloc(a, lex->strlen + 6);
-  size_t pos = 0;
-  for(size_t i = 0; i < lex->len; i++)
-  {
-    string* token = lex->token_strings[i];
-    for(int j = 0; j < u_strlen(token); j++)
-    {
-      builder[pos++] = u_getc(token, j);
+  // char *builder = arena_alloc(a, lex->strlen + 6);
+  string* out = NULL;
+  for (size_t i = 0; i < lex->lines->len; i++) {
+    string* line_str = line_to_string(a, lex->lines->values[i]);
+    if (line_str != NULL) {
+      char line_prefix[30];
+      snprintf(line_prefix, 30, "%lu:\t", i + 1);
+      if (out == NULL) out = u_strnew(a, line_prefix);
+      else out = u_strcats(a, out, line_prefix);
+      out = u_strcat(a, out, line_str);
     }
   }
-  strncpy(builder + pos, "(EOF)", 6);
-  string* ret = u_strnew(context, builder);
+  string* ret;
+  if (out == NULL) ret = u_strnew(context, "EOF");
+  else out = u_strcats(context, out, "EOF");
 
   arena_free(a);
-  return ret;
+  return out;
+}
+
+string* line_to_string(Arena* context, const Line* line)
+{
+  if (line == NULL || line->len == 0) return NULL;
+
+  Arena* a = arena_create();
+  string* out = NULL;
+
+  for (size_t i = 0; i < line->len; i++)
+  {
+    string* token_str = token_to_string(a, &line->values[i]);
+    if (out == NULL) out = token_str;
+    else out = u_strcat(a, out, token_str);
+  }
+
+  out = u_strcats(context, out, "\n");
+  arena_free(a);
+  return out;
+}
+
+Token* token_create(Arena* arena, TokenType t, const string* value)
+{
+  Token* new = arena_alloc(arena, sizeof(Token));
+  new->type = t;
+  new->value = value;
+  return new;
+}
+
+string* token_to_string(Arena* context, Token* token)
+{
+  Arena* a = arena_create();
+  string* out = u_strnew(a, "(");
+  out = u_strcats(a, out, token_type_str[token->type]);
+  if (token->value != NULL) {
+    out = u_strcats(a, out, ",");
+    out = u_strcat(a, out, token->value);
+  }
+  out = u_strcats(a, out, ")");
+
+  out = u_strcpyar(context, out);
+  arena_free(a);
+  return out;
 }

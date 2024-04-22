@@ -1,3 +1,5 @@
+#include <util.h>
+
 #define CHAR_SUM_2(a, b)                   (T(b) << 8)  + T(a)
 #define CHAR_SUM_3(a, b, c)                (T(c) << 16) + (T(b) << 8)  + T(a)
 #define CHAR_SUM_4(a, b, c, d)             (T(d) << 24) + (T(c) << 16) + (T(b) << 8)  + T(a)
@@ -112,3 +114,9 @@ typedef enum {
 #undef X
   TokenType_COUNT
 } TokenType;
+
+typedef struct {
+  TokenType type;
+  const string* value;
+} Token;
+

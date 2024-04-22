@@ -13,7 +13,8 @@ typedef struct AST
 
   Lexer* lexer;
   ASTType type;
-  size_t token_num;
+  size_t token_line;
+  size_t token_idx;
   struct AST** children;
 
 } AST;

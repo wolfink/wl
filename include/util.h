@@ -12,6 +12,46 @@ typedef char string;
 
 #define ARENA_MAX_SIZE MB(1)
 
+#define vector_template(type)\
+  typedef struct {\
+    Arena* mem;\
+    size_t size;\
+    size_t len;\
+    type* values;\
+  } vector_##type;\
+  vector_##type* vector_##type##_create(Arena* arena);\
+  void vector_##type##_resize(vector_##type* vector);\
+  void vector_##type##_add(vector_##type* vector, type value);\
+
+#define vector_impl(type, default_size)\
+  vector_##type* vector_##type##_create(Arena* arena)\
+  {\
+    vector_##type* out = arena_alloc(arena, sizeof(vector_##type));\
+    out->mem = arena;\
+    out->size = default_size;\
+    out->len = 0;\
+    out->values = arena_alloc(arena, sizeof(type) * default_size);\
+    return out;\
+  }\
+  void vector_##type##_resize(vector_##type* vector)\
+  {\
+    if (vector->len >= vector->size) {\
+      vector->size *= 2;\
+      type* values_new = arena_alloc(vector->mem, sizeof(vector_##type) * vector->size);\
+      memcpy(values_new, vector->values, vector->len);\
+      vector->values = values_new;\
+    }\
+  }\
+  void vector_##type##_add(vector_##type* vector, type value)\
+  {\
+    vector_##type##_resize(vector);\
+    vector->values[vector->len++] = value;\
+  }\
+
+#define vector_create(type) vector_##type##_create
+#define vector_add(type) vector_##type##_add
+
+typedef void* object;
 typedef int (*CTypeFunction)(char);
 
 static inline int is_alpha(char c)  { return isalpha(c); }

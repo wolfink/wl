@@ -15,8 +15,8 @@
 #define BRANCH_CREATE(type) ast_create(arena, ASTType_##type, parser->lexer)
 #define CHECK_SCAN(token) ((NEXT_TOKEN == TokenType_##token) ? SCAN(token) : NULL)
 #define END_RULE return tree; }
-#define FIRST(n, ...) first(next_token(parser), n, __VA_ARGS__)
-#define NEXT_TOKEN next_token(parser)
+#define FIRST(n, ...) first(parser_next_token(parser)->type, n, __VA_ARGS__)
+#define NEXT_TOKEN parser_next_token(parser)->type
 #define RETURN_ROOT return tree
 #define ROOT_APPEND(branch) ast_append(arena, tree, branch)
 #define RULE(rule) r_##rule(arena, parser)
@@ -55,7 +55,7 @@ int first(TokenType t, size_t n, ...)
 
 AST* scan_op(Arena* a, Parser* p, size_t n, ...)
 {
-  TokenType nt = next_token(p);
+  TokenType nt = parser_next_token(p)->type;
   va_list ptr;
   va_start(ptr, n);
   for(int i = 0; i < n; i++) {
@@ -104,7 +104,7 @@ END_RULE
 // END_RULE
 
 RULE_IMPL(DATA_TYPE)
-  if (FIRST(1, TokenType_ID)) SCAN_ADD(ID);
+  if (NEXT_TOKEN == TokenType_ID) SCAN_ADD(ID);
   else SCAN_ADD(NUMBER);
 END_RULE
 
@@ -113,7 +113,7 @@ RULE_IMPL(DO)
   SCAN(DO);
   b = RULE(BLOCK);
   ROOT_APPEND(b);
-  if (FIRST(1, TokenType_WHILE)) {
+  if (NEXT_TOKEN == TokenType_WHILE) {
     ROOT_APPEND(RULE(WHILE));
   }
 END_RULE
