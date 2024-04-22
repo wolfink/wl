@@ -15,7 +15,6 @@
   X(CARAT,        '^',  "CARAT")\
   X(COLON,        ':',  "COLON")\
   X(COMMA,        ',',  "COMMA")\
-  X(DBL_QUOTE,    '\"', "DBL-QUOTE")\
   X(FSLASH,       '/',  "FSLASH") \
   X(HASH,         '#',  "HASH")\
   X(LANGLE,       '<',  "LANGLE")\
@@ -84,6 +83,7 @@
 
 #define TokenTypeTableUnique \
   X(NEWLINE, '\n', "NEWLINE")\
+  X(DBL_QUOTE,    '\"', "DBL-QUOTE")\
   X(LINE_COMMENT, CHAR_SUM_2('/', '/'), "LINE-COMMENT")\
   X(COMMENT_START, CHAR_SUM_2('/', '*'), "COMMENT-START")\
 

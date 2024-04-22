@@ -20,5 +20,9 @@
 #define max(a, b) (a > b) ? a : b;
 #define min(a, b) (a < b) ? a : b;
 
+#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_YELLOW  "\x1b[33m"
+#define ANSI_COLOR_RESET   "\x1b[0m"
+
 #define NULL_CHECK(obj, fun)\
 if (obj == NULL) die("error: " #fun ": " #obj " is NULL\n");

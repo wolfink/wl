@@ -50,7 +50,9 @@ int main(int argc, char** argv)
   FILE* fp = fopen(argv[1], "r");
   string* in = read_file(a, fp);
 
-  Lexer* l = lexer_create(a, in);
+  Lexer* l = lexer_create(a, argv[1]);
+  const int l_fail = lexer_scan(l, in);
+  if (l_fail) die("%s:" ANSI_COLOR_RED " error: " ANSI_COLOR_RESET "lexer failed to read file\n", argv[1]);
   if (flags & SHOW_LEXER) {
     printf("== Lexer output ============\n\n");
     string* out = lexer_to_string(a, l);

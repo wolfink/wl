@@ -45,8 +45,9 @@ string* line_to_string(Arena*, const Line* line);
 
 
 typedef struct {
+  Arena* mem;
   size_t curr_line;
-  int in_comment;
+  const char* filename;
   vector_Line* lines;
 } Lexer;
 

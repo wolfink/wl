@@ -24,18 +24,6 @@ string* token_type_tostr(Arena* a, TokenType t)
 vector_impl(Token, 100)
 vector_impl(object, 100)
 
-Lexer* lexer_new(Arena* a)
-{
-  Lexer* ret = arena_alloc(a, sizeof(Lexer));
-  ret->lines = vector_object_create(a);
-  // ret->tokens = arena_alloc(a, sizeof(TokenType) * LEXER_DEFAULT_SIZE);
-  // ret->token_strings = arena_alloc(a, sizeof(string) * LEXER_DEFAULT_SIZE);
-  // ret->size = LEXER_DEFAULT_SIZE;
-  // ret->len = 0;
-  // ret->strlen = 0;
-  return ret;
-}
-
 // TODO: fix function
 // int lexer_resize(Arena* a, Lexer* lex, size_t new_size)
 // {
@@ -120,16 +108,26 @@ int lexer_add_string_token(
     return index - 1;
 }
 
-Lexer* lexer_create(Arena *context, string* in)
+Lexer* lexer_create(Arena* a, const char* filename)
 {
-  Arena *a = arena_create();
-  if(!a) return NULL;
-  Lexer* lex = lexer_new(context);
-  lex->curr_line = 0;
-  vector_object_add(lex->lines, vector_Token_create(context));
-  if (u_strlen(in) == 0) return NULL;
+  Lexer* ret = arena_alloc(a, sizeof(Lexer));
+  ret->mem = a;
+  ret->filename = filename;
+  ret->curr_line = 0;
+  ret->lines = vector_object_create(a);
+  return ret;
+}
 
-  for(int index = 0; index < u_strlen(in); index++)
+// Output: int => 0 on success, 1 on failure
+int lexer_scan(Lexer* lex, string* in)
+{
+  Arena* context = lex->mem;
+  Arena* a = arena_create();
+  if(!a) return 1;
+  vector_object_add(lex->lines, vector_Token_create(context));
+  if (u_strlen(in) == 0) return 1;
+
+  for(int index = 0, line_pos = 0; index < u_strlen(in); index++, line_pos++)
   {
     Arena *b = arena_create_init(MAX_TOKEN_LEN + sizeof(size_t) + 1);
 
@@ -185,6 +183,7 @@ Lexer* lexer_create(Arena *context, string* in)
       while(index < u_strlen(in) && in[++index] != '\n'); // Move index past the end of the line
       lex->curr_line++;
       vector_object_add(lex->lines, vector_Token_create(context));
+      line_pos = 0;
       continue;
     case CHAR_SUM_2('/', '*'):
       index += 2;
@@ -194,6 +193,7 @@ Lexer* lexer_create(Arena *context, string* in)
         if (in[index] == '\n') {
           lex->curr_line++;
           vector_object_add(lex->lines, vector_Token_create(context));
+          line_pos = 0;
         }
       }; 
       continue;
@@ -231,6 +231,7 @@ Lexer* lexer_create(Arena *context, string* in)
       case '\n': 
         lex->curr_line++;
         vector_object_add(lex->lines, vector_Token_create(context));
+        line_pos = 0;
 
       default:
         if (isdigit(c)) {
@@ -243,6 +244,10 @@ Lexer* lexer_create(Arena *context, string* in)
           index = lexer_add_string_token(context, lex, TokenType_NUMBER, is_digit, in, index);
         } else if (isalpha(c) || c == '_' || c == '?') {
           index = lexer_add_string_token(context, lex, TokenType_ID, is_idchar, in, index);
+        } else if (isspace(c)){
+          continue;
+        } else {
+          die("%s:%lu:%lu: \x1b[31merror:\x1b[0m unrecognized token \'%c\'\n", lex->filename, lex->curr_line + 1, line_pos, c);
         }
     }
 #undef X
@@ -253,7 +258,7 @@ Lexer* lexer_create(Arena *context, string* in)
   }
 
   arena_free(a);
-  return lex;
+  return 0;
 }
 
 // string* lexer_get_value(Arena* context, Lexer* lex, size_t line, size_t index)
