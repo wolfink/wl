@@ -38,11 +38,7 @@ typedef vector_Token Line;
 vector_template(object);
 typedef vector_object vector_Line;
 
-Token*  token_create(Arena*, TokenType type, const string* value);
-string* token_to_string(Arena*, Token*);
-
 string* line_to_string(Arena*, const Line* line);
-
 
 typedef struct {
   Arena* mem;

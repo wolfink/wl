@@ -6,7 +6,7 @@
 
 #include "rules.h"
 
-void skip(Parser* p) { parser_next_token(p); }
+void skip(Parser* p) { p->token_idx++; }
 
 AST* scan(Arena* context, Parser* p, TokenType t)
 {
@@ -14,8 +14,9 @@ AST* scan(Arena* context, Parser* p, TokenType t)
   tree->token_line = p->line_no;
   tree->token_idx = p->token_idx;
 
-  TokenType nt = parser_next_token(p)->type;
-  if (nt == t) {
+  const Token* nt   = parser_next_token(p);
+  TokenType nt_type = nt->type;
+  if (nt_type == t) {
     skip(p);
     return tree;
   } else {
@@ -31,7 +32,7 @@ AST* scan(Arena* context, Parser* p, TokenType t)
     default:
       ts = "";
     }
-    switch(nt)
+    switch(nt_type)
     {
 #define X(name, first, str) \
     case TokenType_##name: \
@@ -42,7 +43,12 @@ AST* scan(Arena* context, Parser* p, TokenType t)
     default:
       nts = "";
     }
-    die("expected: %s, got: %s\n", ts, nts);
+    die("%s:%lu:%lu: " ANSI_COLOR_RED "error: " ANSI_COLOR_RESET "expected: %s, got: %s\n",
+      lexer_get_filename(p->lexer),
+      p->line_no + 1,
+      nt->start,
+      ts,
+      nts);
   }
   return NULL;
 }
@@ -59,11 +65,13 @@ Parser* parser_create(Arena* context, Lexer* lexer)
 
 const Token* parser_next_token(Parser* p)
 {
-  if (p->token_idx >= lexer_get_line_len(p->lexer, p->line_no)) {
+  size_t line_len = lexer_get_line_len(p->lexer, p->line_no);
+  while (p->token_idx >= line_len && p->line_no < lexer_get_num_lines(p->lexer) - 1) {
     p->line_no++;
-    p->token_idx = 0;
+    p->token_idx -= line_len;
+    line_len = lexer_get_line_len(p->lexer, p->line_no);
   }
-  return lexer_get_token(p->lexer, p->line_no, p->token_idx++);
+  return lexer_get_token(p->lexer, p->line_no, p->token_idx);
 }
 
 AST* parser_generate_ast(Parser* p)

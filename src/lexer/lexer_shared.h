@@ -9,93 +9,97 @@
 #define CHAR_SUM_8(a, b, c, d, e, f, g, h) (T(h) << 56) + (T(g) << 48) + (T(f) << 40) + (T(e) << 32) + (T(d) << 24) + (T(c) << 16) + (T(b) << 8) + a
 
 #define TokenTypeTable1 \
-  X(ASSIGN,       '=',  "ASSIGN")\
-  X(BW_AND,       '&',  "BW-AND")\
-  X(BW_OR,        '|',  "BW-OR")\
-  X(CARAT,        '^',  "CARAT")\
-  X(COLON,        ':',  "COLON")\
-  X(COMMA,        ',',  "COMMA")\
-  X(FSLASH,       '/',  "FSLASH") \
-  X(HASH,         '#',  "HASH")\
-  X(LANGLE,       '<',  "LANGLE")\
-  X(LBRACE,       '{',  "LBRACE")\
-  X(LBRACKET,     '[',  "LBRACKET")\
-  X(LPAR,         '(',  "LPAR")\
-  X(MINUS,        '-',  "MINUS")\
-  X(PERIOD,       '.',  "PERIOD")\
-  X(PERCENT,      '%',  "PERCENT")\
-  X(PLUS,         '+',  "PLUS")\
-  X(QUOTE,        '\'', "QUOTE")\
-  X(RANGLE,       '>',  "RANGLE")\
-  X(RBRACE,       '}',  "RBRACE")\
-  X(RBRACKET,     ']',  "RBRACKET")\
-  X(RPAR,         ')',  "RPAR")\
-  X(SEMI,         ';',  "SEMI") \
-  X(STAR,         '*',  "STAR")\
+  X(ASSIGN,       '=',  "\"=\"")\
+  X(BW_AND,       '&',  "\"&\"")\
+  X(BW_OR,        '|',  "\"|\"")\
+  X(CARAT,        '^',  "\"^\"")\
+  X(COLON,        ':',  "\":\"")\
+  X(COMMA,        ',',  "\",\"")\
+  X(FSLASH,       '/',  "\"/\"") \
+  X(LANGLE,       '<',  "\"<\"")\
+  X(LBRACE,       '{',  "\"{\"")\
+  X(LBRACKET,     '[',  "\"[\"")\
+  X(LPAR,         '(',  "\"(\"")\
+  X(MINUS,        '-',  "\"-\"")\
+  X(NOT,          '!',  "\"!\"")\
+  X(PERIOD,       '.',  "\".\"")\
+  X(PERCENT,      '%',  "\"%\"")\
+  X(PLUS,         '+',  "\"+\"")\
+  X(RANGLE,       '>',  "\">\"")\
+  X(RBRACE,       '}',  "\"}\"")\
+  X(RBRACKET,     ']',  "\"]\"")\
+  X(RPAR,         ')',  "\")\"")\
+  X(SEMI,         ';',  "\";\"") \
+  X(STAR,         '*',  "\"*\"")\
+  X(TILDE,        '~',  "\"~\"")\
   X(EOF,         '\0',  "EOF")\
 
 #define TokenTypeTable2 \
-  X(SMALLARROW,    CHAR_SUM_2('-', '>'), "S-ARROW")\
-  X(BIGARROW,      CHAR_SUM_2('=', '>'), "B-ARROW")\
-  X(EQUALS,        CHAR_SUM_2('=', '='), "EQUALS")\
-  X(AND_EQUALS,    CHAR_SUM_2('&', '='), "AND-EQUALS")\
-  X(CARAT_EQUALS,  CHAR_SUM_2('^', '='), "CARAT-EQUALS")\
-  X(GT_EQUALS,     CHAR_SUM_2('>', '='), "GT-OR-EQUALS")\
-  X(MINUS_EQUALS,  CHAR_SUM_2('-', '='), "MINUS-EQUALS")\
-  X(LT_EQUALS,     CHAR_SUM_2('<', '='), "LT-OR-EQUALS")\
-  X(MOD_EQUALS,    CHAR_SUM_2('%', '='), "MOD-EQUALS")\
-  X(OR_EQUALS,     CHAR_SUM_2('|', '='), "OR-EQUALS")\
-  X(PLUS_EQUALS,   CHAR_SUM_2('+', '='), "PLUS-EQUALS")\
-  X(SLASH_EQUALS,  CHAR_SUM_2('/', '='), "SLASH-EQUALS")\
-  X(STAR_EQUALS,   CHAR_SUM_2('*', '='), "STAR-EQUALS")\
-  X(AND,           CHAR_SUM_2('&', '&'), "AND")\
-  X(OR,            CHAR_SUM_2('|', '|'), "OR")\
-  X(DBL_PERIOD,    CHAR_SUM_2('.', '.'), "DBL-PERIOD")\
-  X(COLON_ASSIGN,  CHAR_SUM_2(':', '='), "COLON-ASSIGN")\
-  X(DBL_COLON,     CHAR_SUM_2(':', ':'), "DBL-COLON")\
-  X(COLON_LARROW,  CHAR_SUM_2('<', ':'), "COLON-LARROW")\
-  X(COLON_RARROW,  CHAR_SUM_2(':', '>'), "COLON-RARROW")\
-  X(SHIFT_LEFT,    CHAR_SUM_2('<', '<'), "SHIFT-LEFT")\
-  X(SHIFT_RIGHT,   CHAR_SUM_2('>', '>'), "SHIFT-RIGHT")\
-  X(IF,            CHAR_SUM_2('i', 'f'), "IF")\
-  X(DO,            CHAR_SUM_2('d', 'o'), "DO")\
+  X(SMALLARROW,    CHAR_SUM_2('-', '>'), "\"->\"")\
+  X(BIGARROW,      CHAR_SUM_2('=', '>'), "\"=>\"")\
+  X(EQUALS,        CHAR_SUM_2('=', '='), "\"==\"")\
+  X(AND_EQUALS,    CHAR_SUM_2('&', '='), "\"&=\"")\
+  X(CARAT_EQUALS,  CHAR_SUM_2('^', '='), "\"^=\"")\
+  X(GT_EQUALS,     CHAR_SUM_2('>', '='), "\">=\"")\
+  X(MINUS_EQUALS,  CHAR_SUM_2('-', '='), "\"-=\"")\
+  X(LT_EQUALS,     CHAR_SUM_2('<', '='), "\"<=\"")\
+  X(MOD_EQUALS,    CHAR_SUM_2('%', '='), "\"%=\"")\
+  X(OR_EQUALS,     CHAR_SUM_2('|', '='), "\"|=\"")\
+  X(PLUS_EQUALS,   CHAR_SUM_2('+', '='), "\"+=\"")\
+  X(SLASH_EQUALS,  CHAR_SUM_2('/', '='), "\"/=\"")\
+  X(STAR_EQUALS,   CHAR_SUM_2('*', '='), "\"*=\"")\
+  X(NOT_EQUALS,    CHAR_SUM_2('!', '='), "\"!=\"")\
+  X(AND,           CHAR_SUM_2('&', '&'), "\"&&\"")\
+  X(OR,            CHAR_SUM_2('|', '|'), "\"||\"")\
+  X(DBL_PERIOD,    CHAR_SUM_2('.', '.'), "\"..\"")\
+  X(COLON_ASSIGN,  CHAR_SUM_2(':', '='), "\":=\"")\
+  X(DBL_COLON,     CHAR_SUM_2(':', ':'), "\"::\"")\
+  X(COLON_LARROW,  CHAR_SUM_2('<', ':'), "\"<:\"")\
+  X(COLON_RARROW,  CHAR_SUM_2(':', '>'), "\":>\"")\
+  X(SHIFT_LEFT,    CHAR_SUM_2('<', '<'), "\"<<\"")\
+  X(SHIFT_RIGHT,   CHAR_SUM_2('>', '>'), "\">>\"")\
+  X(IF,            CHAR_SUM_2('i', 'f'), "if")\
+  X(DO,            CHAR_SUM_2('d', 'o'), "do")\
 
 #define TokenTypeTable3 \
-  X(ENV,          CHAR_SUM_3('e', 'n', 'v'), "ENV")\
-  X(FOR,          CHAR_SUM_3('f', 'o', 'r'), "FOR")\
-  X(MUT,          CHAR_SUM_3('m', 'u', 't'), "MUT")\
-  X(SL_EQUALS,    CHAR_SUM_3('<', '<', '='), "SHIFT-LEFT-EQUALS")\
-  X(SR_EQUALS,    CHAR_SUM_3('>', '>', '='), "SHIFT-RIGHT-EQUALS")\
-  X(TPL_PERIOD,   CHAR_SUM_3('.', '.', '.'), "TPL-PERIOD")
+  X(ENV,          CHAR_SUM_3('e', 'n', 'v'), "env")\
+  X(FOR,          CHAR_SUM_3('f', 'o', 'r'), "for")\
+  X(MUT,          CHAR_SUM_3('m', 'u', 't'), "mut")\
+  X(SL_EQUALS,    CHAR_SUM_3('<', '<', '='), "\"<<=\"")\
+  X(SR_EQUALS,    CHAR_SUM_3('>', '>', '='), "\">>=\"")\
+  X(TPL_PERIOD,   CHAR_SUM_3('.', '.', '.'), "\"...\"")
 
 #define TokenTypeTable4 \
-  X(ELSE,         CHAR_SUM_4('e', 'l', 's', 'e'), "ELSE")\
-  X(ENUM,         CHAR_SUM_4('e', 'n', 'u', 'm'), "ENUM")\
-  X(LOAD,         CHAR_SUM_4('l', 'o', 'a', 'd'), "LOAD")\
+  X(ELSE,         CHAR_SUM_4('e', 'l', 's', 'e'), "else")\
+  X(ENUM,         CHAR_SUM_4('e', 'n', 'u', 'm'), "enum")\
+  X(LOAD,         CHAR_SUM_4('l', 'o', 'a', 'd'), "load")\
 
 #define TokenTypeTable5 \
-  X(BREAK,        CHAR_SUM_5('b', 'r', 'e', 'a', 'k'), "BREAK")\
-  X(WHILE,        CHAR_SUM_5('w', 'h', 'i', 'l', 'e'), "WHILE")\
+  X(BREAK,        CHAR_SUM_5('b', 'r', 'e', 'a', 'k'), "break")\
+  X(WHILE,        CHAR_SUM_5('w', 'h', 'i', 'l', 'e'), "while")\
 
 #define TokenTypeTable6 \
-  X(INLINE,       CHAR_SUM_6('i', 'n', 'l', 'i', 'n', 'e'), "INLINE")\
-  X(SWITCH,       CHAR_SUM_6('s', 'w', 'i', 't', 'c', 'h'), "SWITCH")\
+  X(INLINE,       CHAR_SUM_6('i', 'n', 'l', 'i', 'n', 'e'), "inline")\
+  X(SWITCH,       CHAR_SUM_6('s', 'w', 'i', 't', 'c', 'h'), "switch")\
 
 #define TokenTypeTableUnique \
-  X(NEWLINE, '\n', "NEWLINE")\
-  X(DBL_QUOTE,    '\"', "DBL-QUOTE")\
-  X(LINE_COMMENT, CHAR_SUM_2('/', '/'), "LINE-COMMENT")\
-  X(COMMENT_START, CHAR_SUM_2('/', '*'), "COMMENT-START")\
+  X(NEWLINE, '\n', "\"\\n\"")\
+  X(QUOTE, '\'', "char literal")\
+  X(DBL_QUOTE,    '\"', "string literal")\
+  X(MACRO, '#', "macro")\
+  X(LINE_COMMENT, CHAR_SUM_2('/', '/'), "line comment")\
+  X(COMMENT_START, CHAR_SUM_2('/', '*'), "comment start")\
 
 
 #define TokenTypeTableNumber \
-  X(OCTAL,        0, "OCTAL")\
-  X(BINARY,       0, "BINARY")\
-  X(HEX,          0, "HEX")\
+  X(OCTAL,        0, "octal")\
+  X(BINARY,       0, "binary")\
+  X(HEX,          0, "hexadecimal")\
 
 #define TokenTypeTableStmts \
-  X(NUMBER,      0, "NUMBER")\
-  X(ID,          0, "ID")\
+  X(NUMBER,      0, "number")\
+  X(ID,          0, "identifier")\
+  X(STRING,      0, "string")\
 
 #define TokenTypeTable \
   TokenTypeTable1 \
@@ -118,5 +122,7 @@ typedef enum {
 typedef struct {
   TokenType type;
   const string* value;
+  size_t start;
+  size_t end;
 } Token;
 

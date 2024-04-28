@@ -80,6 +80,11 @@ RULE_IMPL(BLOCK)
   SCAN(RBRACE);
 END_RULE
 
+// BLOCK_STMT: <BRANCH> | <SWITCH> | <WHILE> | <DO>
+// FIRST(<BRANCH>) = IF
+// FIRST(<SWITCH>) = SWITCH
+// FIRST(<WHILE>) = WHILE
+// FIRST(<DO>) = DO
 RULE_IMPL(BLOCK_STMT)
   if(NEXT_TOKEN == TokenType_IF) return RULE(BRANCH);
   else if(NEXT_TOKEN == TokenType_SWITCH) return RULE(SWITCH);
@@ -87,6 +92,7 @@ RULE_IMPL(BLOCK_STMT)
   return RULE(DO);
 END_RULE
 
+// BRANCH: IF <EXPR> <BLOCK> <ELSE>
 RULE_IMPL(BRANCH)
   SCAN(IF);
   ROOT_APPEND(RULE(EXPR));
@@ -94,6 +100,7 @@ RULE_IMPL(BRANCH)
   ROOT_APPEND(RULE(ELSE));
 END_RULE
 
+// CALL: ID <TUPLE>
 RULE_IMPL(CALL)
   SCAN(ID);
   ROOT_APPEND(RULE(TUPLE));
@@ -108,39 +115,42 @@ RULE_IMPL(DATA_TYPE)
   else SCAN_ADD(NUMBER);
 END_RULE
 
+// DO: DO <BLOCK> | DO <BLOCK> WHILE <WHILE>
 RULE_IMPL(DO)
   AST* b, *w;
   SCAN(DO);
-  b = RULE(BLOCK);
-  ROOT_APPEND(b);
+  ROOT_APPEND(RULE(BLOCK));
   if (NEXT_TOKEN == TokenType_WHILE) {
     ROOT_APPEND(RULE(WHILE));
   }
 END_RULE
 
+// ELSE: ELSE <BLOCK> | ELSE <BRANCH>
+// FIRST(<BLOCK>) = LBRACE
 RULE_IMPL(ELSE)
-  AST *b;
-  if(FIRST(1, TokenType_ELSE)) SCAN(ELSE);
-  if(FIRST(1, TokenType_LBRACE)) {
-    ROOT_APPEND(RULE(BLOCK));
-  }
-  else {
-    b = RULE(BRANCH);
-    ROOT_APPEND(b);
-  }
+  SCAN(ELSE);
+  if(NEXT_TOKEN == TokenType_LBRACE) ROOT_APPEND(RULE(BLOCK));
+  else ROOT_APPEND(RULE(BRANCH));
 END_RULE
 
+// ENV: (PLUS | MINUS| NULL) ID
 RULE_IMPL(ENV)
-  if (FIRST(1, TokenType_PLUS)) SCAN_ADD(PLUS);
-  else if (FIRST(1, TokenType_MINUS)) SCAN_ADD(MINUS);
+  if (NEXT_TOKEN == TokenType_PLUS) SCAN_ADD(PLUS);
+  else if (NEXT_TOKEN == TokenType_MINUS) SCAN_ADD(MINUS);
   SCAN_ADD(ID);
 END_RULE
 
+// EXPR: <BLOCK_STMT> | <LOAD> | <EXPR_OR> | ID <ASSIGN> <EXPR> | ID MACRO
+// FIRST(<BLOCK_STMT>) = IF | FOR | WHILE | DO
+// FIRST(<LOAD>) = LOAD
+// FIRST(<EXPR_OR>) = ID | <EXPR_UNARY>
+// FOLLOW(ID) = EQUALS | PLUS_EQUALS | MINUS_EQUALS | ... etc. | MACRO
 RULE_IMPL(EXPR)
   AST* a = NULL, *p = NULL;
   TokenType t = NEXT_TOKEN;
 
   if (FIRST(4, TokenType_IF, TokenType_FOR, TokenType_WHILE, TokenType_DO)) p = RULE(BLOCK_STMT);
+  else if (t == TokenType_LOAD) p = RULE(LOAD);
   else p = RULE(EXPR_OR);
   if (t == TokenType_ID) {
     if ((a = RULE(ASSIGN)) != NULL) {
@@ -149,10 +159,17 @@ RULE_IMPL(EXPR)
       ROOT_APPEND(RULE(EXPR));
       RETURN_ROOT;
     }
+    if (NEXT_TOKEN == TokenType_MACRO) {
+      // SCAN_ADD(ID);
+      SCAN_ADD(MACRO);
+    }
   }
   ROOT_APPEND(p);
 END_RULE
 
+// RULE_EXPR: <LOWER_EXPR> OP <RULE_EXPR>
+// FIRST(OP) = TT1 | TT2 | .. | TTN
+// FOLLOW(LOWER_EXPR) = OP
 RULE_EXPR(EXPR_OR, CHECK_SCAN(OR), EXPR_AND)
 RULE_EXPR(EXPR_AND, CHECK_SCAN(AND), EXPR_BW_OR)
 RULE_EXPR(EXPR_BW_OR, CHECK_SCAN(BW_OR), EXPR_BW_AND)
@@ -161,24 +178,65 @@ RULE_EXPR(EXPR_EQ, RULE(OP_EQ), EXPR_REL)
 RULE_EXPR(EXPR_REL, RULE(OP_REL), EXPR_SUM);
 RULE_EXPR(EXPR_SUM, RULE(OP_SUM), EXPR_MUL);
 RULE_EXPR(EXPR_MUL, RULE(OP_MUL), EXPR_UNARY);
+
+// EXPR_UNARY: <PREFIX> <PRIMARY> <POSTFIX>
+// PREFIX: TILDE <PREFIX> | NULL
+// POSTFIX: COMMA <RANGE> | TILDE | NULL
+// FIRST(<PREFIX>) = TILDE
+// FIRST(<PRIMARY>) = ID | LPAR
+// FIRST(<POSTFIX>) = DBL_PERIOD | TILDE
+// FOLLOW(<PREFIX>) = ID | LPAR
+// FOLLOW(<PRIMARY>) = DBL_PERIOD | TILDE
 RULE_IMPL(EXPR_UNARY)
-  AST* op = RULE(OP_UNARY);
-  if (op != NULL) while (op != NULL) {
-    BRANCH_APPEND(op, RULE(PRIMARY));
-    ROOT_APPEND(op);
-    op = RULE(OP_UNARY);
-  } else return RULE(PRIMARY);
+  AST* pre = NULL, *val = NULL, *post = NULL;
+  // <PREFIX>
+  while (NEXT_TOKEN == TokenType_TILDE) {
+    BRANCH_APPEND(pre, SCAN(TILDE));
+  }
+  // <PRIMARY>
+  val = RULE(PRIMARY);
+  if (pre != NULL) {
+    BRANCH_APPEND(pre, val);
+  }
+  // <POSTFIX>
+  if (NEXT_TOKEN == TokenType_DBL_PERIOD) {
+    post = RULE(RANGE);
+    if (pre != NULL) BRANCH_APPEND(post, pre);
+    else BRANCH_APPEND(post, val);
+    ROOT_APPEND(post);
+  } else if (NEXT_TOKEN == TokenType_TILDE) while (NEXT_TOKEN == TokenType_TILDE) {
+    BRANCH_APPEND(post, SCAN(TILDE));
+    if (pre != NULL) BRANCH_APPEND(post, pre);
+    else BRANCH_APPEND(post, val);
+    ROOT_APPEND(post);
+  } else return val;
+  
+  // if (op != NULL) while (op != NULL) {
+  //   BRANCH_APPEND(op, RULE(PRIMARY));
+  //   ROOT_APPEND(op);
+  //   op = RULE(OP_UNARY);
+  // } else return RULE(PRIMARY);
 END_RULE
 
-RULE_OP(OP_EQ, 1, TokenType_EQUALS);
+RULE_OP(OP_EQ, 2, TokenType_EQUALS, TokenType_NOT_EQUALS);
 RULE_OP(OP_REL, 2, TokenType_LANGLE, TokenType_RANGLE);
 RULE_OP(OP_SUM, 2, TokenType_PLUS, TokenType_MINUS);
 RULE_OP(OP_MUL, 2, TokenType_STAR, TokenType_FSLASH);
-RULE_OP(OP_UNARY, 1, TokenType_STAR);
+// RULE_OP(OP_UNARY_PREFIX, 1, TokenType_STAR);
+// RULE_OP(OP_UNARY_POSTFIX, 1, TokenType_COMMA);
 
+// FLOAT: PERIOD NUMBER
 RULE_IMPL(FLOAT)
   SCAN(PERIOD);
   SCAN_ADD(NUMBER);
+END_RULE
+
+// RANGE: COMMA <EXPR>
+RULE_IMPL(RANGE)
+  SCAN(DBL_PERIOD);
+  ROOT_APPEND(RULE(EXPR));
+  SCAN(TPL_PERIOD);
+  ROOT_APPEND(RULE(EXPR));
 END_RULE
 
 RULE_IMPL(FUNCTION_TYPE)
@@ -187,6 +245,8 @@ RULE_IMPL(FUNCTION_TYPE)
   ROOT_APPEND(RULE(TUPLE));
 END_RULE
 
+// LITERAL: <FLOAT> | NUMBER PERIOD <FLOAT> | HEX | OCTAL | BINARY
+// FIRST(<FLOAT>) = PERIOD
 RULE_IMPL(LITERAL)
   AST* n, *f;
   if (NEXT_TOKEN == TokenType_PERIOD) {
@@ -204,38 +264,62 @@ RULE_IMPL(LITERAL)
   else SCAN_ADD(BINARY);
 END_RULE
 
+// LOAD: LOAD ID <LOAD_WHILE>
+// LOAD_WHILE: PERIOD STAR | PERIOD ID | NULL
+// FIRST(<LOAD_WHILE>) = PERIOD
+RULE_IMPL(LOAD)
+  SCAN(LOAD);
+  SCAN_ADD(ID);
+  // <LOAD_WHILE>
+  while (NEXT_TOKEN == TokenType_PERIOD) {
+    SCAN(PERIOD);
+    if (NEXT_TOKEN == TokenType_STAR) { SCAN_ADD(STAR); break; }
+    SCAN_ADD(ID);
+  }
+END_RULE
+
+// METHOD_TYPE: <TUPLE> SMALLARROW <FUNCTION_TYPE>
 RULE_IMPL(METHOD_TYPE)
   ROOT_APPEND(RULE(TUPLE));
   SCAN(SMALLARROW);
   ROOT_APPEND(RULE(FUNCTION_TYPE));
 END_RULE
 
+// PROGRAM: STMT_LIST
 RULE_IMPL(PROGRAM)
   ROOT_APPEND(RULE(STMT_LIST));
   // SCAN(EOF)
 END_RULE
 
+// PRIMARY: <TUPLE> | <VAR> | <PRIMARY_2> | <PRIMARY_3> | <LITERAL>
+// PRIMARY_2: <PRIMARY> <CALL>
+// PRIMARY_3: <PRIMARY_2> <METHOD>
+// FIRST(<TUPLE>) = LPAR
+// FIRST(<VAR>) = ID
+// FIRST(<CALL>) = LPAR
+// FIRST(<METHOD>) = SMALLARROW
+// FIRST(<LITERAL>) = NUMBER | HEX | OCTAL | BINARY | PERIOD
 RULE_IMPL(PRIMARY)
-  AST* r = NULL, *c;
-  if (NEXT_TOKEN == TokenType_LPAR) r = RULE(TUPLE);
-  else if (NEXT_TOKEN == TokenType_ID) r = RULE(VAR);
+  AST* prefix = NULL, *call;
+  if (NEXT_TOKEN == TokenType_LPAR) prefix = RULE(TUPLE);
+  else if (NEXT_TOKEN == TokenType_ID) prefix = RULE(VAR);
   if (NEXT_TOKEN == TokenType_LPAR) {
-    c = BRANCH_CREATE(CALL);
-    BRANCH_APPEND(c, r);
-    BRANCH_APPEND(c, RULE(TUPLE));
-    return c;
+    call = BRANCH_CREATE(CALL);
+    BRANCH_APPEND(call, prefix);
+    BRANCH_APPEND(call, RULE(TUPLE));
+    return call;
   } else if (CHECK_SCAN(SMALLARROW) != NULL){
-    c = BRANCH_CREATE(METHOD);
-    BRANCH_APPEND(c, r);
-    BRANCH_APPEND(c, RULE(TUPLE));
-    return c;
+    call = BRANCH_CREATE(METHOD);
+    BRANCH_APPEND(call, prefix);
+    BRANCH_APPEND(call, RULE(TUPLE));
+    return call;
   }
   if (FIRST(5, TokenType_NUMBER, TokenType_HEX, TokenType_OCTAL, TokenType_BINARY, TokenType_PERIOD)) return RULE(LITERAL);
-  return r;
+  return prefix;
 END_RULE
 
 RULE_IMPL(STMT)
-  if(FIRST(3, TokenType_ID, TokenType_NUMBER, TokenType_STAR)) {
+  if(FIRST(4, TokenType_ID, TokenType_NUMBER, TokenType_STAR, TokenType_LOAD)) {
     ROOT_APPEND(RULE(EXPR));
     SCAN(SEMI);
   } else if (NEXT_TOKEN == TokenType_ENV) ROOT_APPEND(RULE(ENV));
@@ -244,9 +328,9 @@ RULE_IMPL(STMT)
 END_RULE
 
 RULE_IMPL(STMT_LIST)
-  if (FIRST(7,
+  if (FIRST(8,
         TokenType_ID, TokenType_NUMBER, TokenType_STAR, TokenType_IF,
-        TokenType_SWITCH, TokenType_WHILE, TokenType_DO/*, TokenType_CASE */)) {
+        TokenType_SWITCH, TokenType_WHILE, TokenType_DO, TokenType_LOAD/*, TokenType_CASE */)) {
     ROOT_APPEND(RULE(STMT));
     ROOT_APPEND(RULE(STMT_LIST));
   }
@@ -263,17 +347,23 @@ RULE_IMPL(TAG)
   SCAN(COLON);
 END_RULE
 
+// TUPLE: LPAR <TUPLE_BODY> RPAR
+// FOLLOW(<TUPLE_BODY>) = RPAR
 RULE_IMPL(TUPLE)
   if (NEXT_TOKEN == TokenType_LPAR)
   {
     SCAN(LPAR);
-    ROOT_APPEND(RULE(TUPLE_BODY));
-    SCAN(RPAR);
+    if (NEXT_TOKEN == TokenType_RPAR) SCAN(RPAR);
+    else {
+      ROOT_APPEND(RULE(TUPLE_BODY));
+      SCAN(RPAR);
+    }
   }
   else if (NEXT_TOKEN == TokenType_ID) return RULE(VAR);
   else return RULE(LITERAL);
 END_RULE
 
+// TUPLE_BODY: NULL | <EXPR> | <EXPR> COMMA <TUPLE_BODY>
 RULE_IMPL(TUPLE_BODY)
   ROOT_APPEND(RULE(EXPR));
   if (FIRST(1, TokenType_COMMA)) {
@@ -365,6 +455,7 @@ END_RULE
 
 // pointer decl:  *var
 // pointer deref: *var or var*?
+// VAR: ID | STAR <VAR> | COLON <TYPE> | PERIOD <VAR>
 RULE_IMPL(VAR)
   if (NEXT_TOKEN == TokenType_ID) SCAN_ADD(ID);
   else if (NEXT_TOKEN == TokenType_STAR) ROOT_APPEND(RULE(VAR));
@@ -377,6 +468,7 @@ RULE_IMPL(VAR)
   }
 END_RULE
 
+// WHILE: WHILE <EXPR> <BLOCK>
 RULE_IMPL(WHILE)
   SCAN(WHILE);
   ROOT_APPEND(RULE(EXPR));

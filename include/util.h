@@ -61,6 +61,13 @@ static inline int is_digit(char c)  { return isdigit(c); }
 static inline int is_float(char c)  { return isdigit(c); }
 static inline int is_binary(char c) { return (c == '0' || c == '1'); }
 static inline int is_octal(char c)  { return (c >= '0' && c < '8'); }
+#define is_char(name, in) static inline int is_##name(char c) { return c == in; }
+#define isn_char(name, in) static inline int isn_##name(char c) { return c != in; }
+isn_char(dquote, '\"')
+isn_char(quote, '\'')
+isn_char(rpar, '(')
+isn_char(rbrace, '}')
+isn_char(semi, ';')
 static inline int is_xdigit(char c) 
 { 
   return isdigit(c) || (c >= 'A' && c < 'G') || (c >= 'a' && c < 'g'); 

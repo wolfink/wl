@@ -46,49 +46,33 @@ string* lexer_next_token(string* in)
 int lexer_add_token(
     Arena* context,
     Lexer* lex,
-    TokenType t,
-    const string* data)
+    const Token* token)
 {
   Arena* a = arena_create();
+  Line* curr_line = lex->lines->values[lex->curr_line];
+
   if (!a) return 1;
 
-  // string* out;
-  // int pos = 0;
-
-  // out = u_strnew(a, "(");
-  // out = u_strcat(a, out, u_strnew(a, token_type_str[t]));
-  // if (data != NULL)
-  //   out = u_strcat(a, out, u_strnew(a, ","));
-  // out = u_strcat(a,
-  //     (data) ? u_strcat(a, out, data): out,
-  //     u_strnew(a, ")"));
-
-  // if (lex->len > lex->size) lexer_resize(context, lex, lex->size * 2);
-  // out = u_strcpyar(context, out);
-  Line* curr_line = lex->lines->values[lex->curr_line];
   if (curr_line == NULL) {
     curr_line = vector_Token_create(lex->lines->mem);
     vector_object_add(lex->lines, curr_line);
   }
-  Token new_token = {t, data};
-  vector_Token_add(curr_line, new_token);
-  // lex->token_strings[lex->len] = out;
-  // lex->tokens[lex->len++] = t;
-  // lex->strlen += u_strlen(out);
+  vector_Token_add(curr_line, *token);
 
   arena_free(a);
   return 0;
 }
 
-inline int lexer_add_string_token(Arena*, Lexer*, TokenType, CTypeFunction matcher, string* in, size_t start);
+// inline int lexer_add_string_token(Arena*, Lexer*, TokenType, CTypeFunction matcher, string* in, size_t start);
 
 int lexer_add_string_token(
     Arena* context,
     Lexer* lex,
-    TokenType t,
+    TokenType t_type,
     CTypeFunction matcher,
     string* in,
-    size_t start)
+    size_t start,
+    size_t line_pos)
 {
     Arena* local = arena_create();
     char temp[MAX_TOKEN_LEN];
@@ -103,7 +87,8 @@ int lexer_add_string_token(
       // Handle float period
     }
     temp[pos] = '\0';
-    lexer_add_token(context, lex, t, u_strnew(local, temp));
+    Token new_token = { t_type, u_strnew(local, temp), line_pos, line_pos + index - start };
+    lexer_add_token(context, lex, &new_token);
     arena_free(local);
     return index - 1;
 }
@@ -124,7 +109,7 @@ int lexer_scan(Lexer* lex, string* in)
   Arena* context = lex->mem;
   Arena* a = arena_create();
   if(!a) return 1;
-  vector_object_add(lex->lines, vector_Token_create(context));
+  // vector_object_add(lex->lines, vector_Token_create(context));
   if (u_strlen(in) == 0) return 1;
 
   for(int index = 0, line_pos = 0; index < u_strlen(in); index++, line_pos++)
@@ -135,10 +120,13 @@ int lexer_scan(Lexer* lex, string* in)
     char temp[MAX_TOKEN_LEN + 1];
 
 #define X(name, number, str)\
-  case number:\
-    lexer_add_token(context, lex, TokenType_##name, NULL);\
-    index += TOKEN_SIZE - 1;\
-    continue;
+  case number:{\
+    const size_t advance = TOKEN_SIZE - 1;\
+    Token new_token = { TokenType_##name, NULL, line_pos, line_pos + advance };\
+    lexer_add_token(context, lex, &new_token);\
+    index += advance;\
+    continue;\
+  }
 #define T(a) ((u_int64_t) a)
 
     // Handle tokens with 6 characters
@@ -210,22 +198,41 @@ int lexer_scan(Lexer* lex, string* in)
       case '0':
         switch(u_getc(in, index + 1))
         {
-        case 'x': 
-          index = lexer_add_string_token(context, lex, TokenType_HEX, is_xdigit, in, index + 2);
+        case 'x':
+          index = lexer_add_string_token(context, lex, TokenType_HEX, is_xdigit, in, index + 2, line_pos);
           break;
         case'0': case'1': case'2': case'3':
         case'4': case'5': case'6': case'7':
-          index = lexer_add_string_token(context, lex, TokenType_OCTAL, is_octal, in, index + 1);
+          index = lexer_add_string_token(context, lex, TokenType_OCTAL, is_octal, in, index + 1, line_pos);
           break;
         case'b':
-          index = lexer_add_string_token(context, lex, TokenType_BINARY, is_binary, in, index + 2);
+          index = lexer_add_string_token(context, lex, TokenType_BINARY, is_binary, in, index + 2, line_pos);
           break;
         case'.':
-          lexer_add_token(context, lex, TokenType_PERIOD, NULL);
-          index++;
-          break;
+          if (index + 2 < u_strlen(in) && u_getc(in, index + 2) == '.');
+          else {
+            Token new_token = { TokenType_PERIOD, NULL, line_pos, line_pos + 1 };
+            lexer_add_token(context, lex, &new_token);
+            index++;
+            break;
+          }
         default:
-          index = lexer_add_string_token(context, lex, TokenType_NUMBER, is_digit, in, index);
+          index = lexer_add_string_token(context, lex, TokenType_NUMBER, is_digit, in, index, line_pos);
+        }
+        break;
+      case'\"':
+        index = lexer_add_string_token(context, lex, TokenType_STRING, isn_dquote, in, index + 1, line_pos) + 1;
+        break;
+      case'\'':
+        index = lexer_add_string_token(context, lex, TokenType_QUOTE, isn_quote, in, index + 1, line_pos) + 1;
+        break;
+      case'#':
+        if (u_getc(in, index + 1) == '(') {
+          index = lexer_add_string_token(context, lex, TokenType_MACRO, isn_rpar, in, index, line_pos) + 1;
+        } else if (u_getc(in, index + 1) == '{'){
+          index = lexer_add_string_token(context, lex, TokenType_MACRO, isn_rbrace, in, index + 1, line_pos) + 1;
+        } else {
+          index = lexer_add_string_token(context, lex, TokenType_MACRO, isn_semi, in, index + 1, line_pos);
         }
         break;
       case '\n': 
@@ -241,9 +248,9 @@ int lexer_scan(Lexer* lex, string* in)
           if (!isspace(c) && c != 'f') {
             //TODO: raise error invalid suffix 
           }
-          index = lexer_add_string_token(context, lex, TokenType_NUMBER, is_digit, in, index);
+          index = lexer_add_string_token(context, lex, TokenType_NUMBER, is_digit, in, index, line_pos);
         } else if (isalpha(c) || c == '_' || c == '?') {
-          index = lexer_add_string_token(context, lex, TokenType_ID, is_idchar, in, index);
+          index = lexer_add_string_token(context, lex, TokenType_ID, is_idchar, in, index, line_pos);
         } else if (isspace(c)){
           continue;
         } else {
@@ -257,8 +264,16 @@ int lexer_scan(Lexer* lex, string* in)
     arena_free(b);
   }
 
+  Token eof = { TokenType_EOF, NULL, 0, 0 };
+  lexer_add_token(context, lex, &eof);
+
   arena_free(a);
   return 0;
+}
+
+const char* lexer_get_filename(Lexer* l)
+{
+  return l->filename;
 }
 
 // string* lexer_get_value(Arena* context, Lexer* lex, size_t line, size_t index)
@@ -324,10 +339,8 @@ string* lexer_to_string(Arena* context, Lexer* lex)
       out = u_strcat(a, out, line_str);
     }
   }
-  string* ret;
-  if (out == NULL) ret = u_strnew(context, "EOF");
-  else out = u_strcats(context, out, "EOF");
 
+  out = u_strcpyar(context, out);
   arena_free(a);
   return out;
 }
@@ -351,11 +364,13 @@ string* line_to_string(Arena* context, const Line* line)
   return out;
 }
 
-Token* token_create(Arena* arena, TokenType t, const string* value)
+Token* token_create(Arena* arena, TokenType t, const string* value, size_t start, size_t end)
 {
   Token* new = arena_alloc(arena, sizeof(Token));
   new->type = t;
   new->value = value;
+  new->start = start;
+  new->end = end;
   return new;
 }
 
