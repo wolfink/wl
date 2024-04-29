@@ -75,6 +75,8 @@ RULE_IMPL(ASSIGN)
     case TokenType_PLUS_EQUALS: return SCAN(PLUS_EQUALS);
     case TokenType_MINUS_EQUALS: return SCAN(MINUS_EQUALS);
     case TokenType_AND_EQUALS: return SCAN(AND_EQUALS);
+    case TokenType_STAR_EQUALS: return SCAN(STAR_EQUALS);
+    case TokenType_SLASH_EQUALS: return SCAN(SLASH_EQUALS);
     default: return NULL;
   }
 END_RULE
@@ -167,7 +169,8 @@ RULE_IMPL(EXPR)
     if ((a = RULE(ASSIGN)) != NULL) {
       ROOT_APPEND(a);
       ROOT_APPEND(p);
-      ROOT_APPEND(RULE(EXPR));
+      if (NEXT_TOKEN == TokenType_LBRACE) ROOT_APPEND(RULE(BLOCK_STMT));
+      else ROOT_APPEND(RULE(EXPR));
       RETURN_ROOT;
     }
     if (NEXT_TOKEN == TokenType_MACRO) SCAN_ADD(MACRO);

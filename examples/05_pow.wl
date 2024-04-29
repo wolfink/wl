@@ -2,12 +2,12 @@
 load std.io;
 
 // Function declaration
-// Format: name: (arg: type, ...) => (return: type) = { **code** }
-pow: (m: 32, n: 32) => (out: 32) = {
+// Format: name: (arg: type, ...) => (return: type) = do { **code** }
+pow: (m: 32, n: 32) => (out: 32) = do {
   out = 1;
   while m -= 1 {
     out *= n;
   }
-}
+};
 
 println# pow(3, 4) = $(pow(3, 4)); // returns "pow(3, 4) = 81"
