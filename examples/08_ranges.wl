@@ -13,13 +13,14 @@ i := 0; while i < 200 {
   }
 }
 
+// start is a pointer to (or address of) type ll_node
 linked_list: (start: &ll_node, size: 32);
 
 create: (MemAlloc mem) -> () => (out: &linked_list) =
 {
   out = mem->allocate(sizeof linked_list);
-  out.size = 0;
-  out.start = create();
+  out~.size = 0; // '~' dereferences a pointer/address type
+  out~.start = create();
 }
 
 ll_node: (next: &ll_node, value: 32);
@@ -30,7 +31,7 @@ create: (MemAlloc mem) -> () => (out: &ll_node) =
 }
 
 ll : &linked_list = create();
-curr_node := ll.start;
+curr_node := ll~.start~; //Dereferencing performs a shallow copy, use 'copy' function for a deep copy
 // Creates a linked list where index equals value over range r1 (0 to 200)
 // "else" handles edge cases for loops
 for r1 {

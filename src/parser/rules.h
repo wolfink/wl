@@ -69,9 +69,14 @@ AST* scan_op(Arena* a, Parser* p, size_t n, ...)
 
 RULE_IMPL(ASSIGN)
   AST* v, *r;
-  if (NEXT_TOKEN == TokenType_ASSIGN) return SCAN(ASSIGN);
-  else if (NEXT_TOKEN == TokenType_COLON_ASSIGN) return SCAN(COLON_ASSIGN);
-  return NULL;
+  switch(NEXT_TOKEN) {
+    case TokenType_ASSIGN: return SCAN(ASSIGN);
+    case TokenType_COLON_ASSIGN: return SCAN(COLON_ASSIGN);
+    case TokenType_PLUS_EQUALS: return SCAN(PLUS_EQUALS);
+    case TokenType_MINUS_EQUALS: return SCAN(MINUS_EQUALS);
+    case TokenType_AND_EQUALS: return SCAN(AND_EQUALS);
+    default: return NULL;
+  }
 END_RULE
 
 RULE_IMPL(BLOCK)
@@ -153,16 +158,19 @@ RULE_IMPL(EXPR)
   else if (t == TokenType_LOAD) p = RULE(LOAD);
   else p = RULE(EXPR_OR);
   if (t == TokenType_ID) {
+    while (NEXT_TOKEN == TokenType_LBRACKET) {
+      AST* l = SCAN(LBRACKET);
+      BRANCH_APPEND(p, l);
+      BRANCH_APPEND(p, RULE(EXPR));
+      SCAN(RBRACKET);
+    }
     if ((a = RULE(ASSIGN)) != NULL) {
       ROOT_APPEND(a);
       ROOT_APPEND(p);
       ROOT_APPEND(RULE(EXPR));
       RETURN_ROOT;
     }
-    if (NEXT_TOKEN == TokenType_MACRO) {
-      // SCAN_ADD(ID);
-      SCAN_ADD(MACRO);
-    }
+    if (NEXT_TOKEN == TokenType_MACRO) SCAN_ADD(MACRO);
   }
   ROOT_APPEND(p);
 END_RULE
@@ -174,7 +182,22 @@ RULE_EXPR(EXPR_OR, CHECK_SCAN(OR), EXPR_AND)
 RULE_EXPR(EXPR_AND, CHECK_SCAN(AND), EXPR_BW_OR)
 RULE_EXPR(EXPR_BW_OR, CHECK_SCAN(BW_OR), EXPR_BW_AND)
 RULE_EXPR(EXPR_BW_AND, CHECK_SCAN(BW_AND), EXPR_EQ)
-RULE_EXPR(EXPR_EQ, RULE(OP_EQ), EXPR_REL)
+// RULE_EXPR(EXPR_EQ, RULE(OP_EQ), EXPR_REL)
+AST *r_EXPR_EQ(Arena *arena, Parser *parser) {
+  AST *tree = ast_create(arena, ASTType_EXPR_EQ, parser->lexer);
+  AST *op = ((void *)0);
+  AST *n = r_EXPR_REL(arena, parser);
+  if ((op = r_OP_EQ(arena, parser)) != ((void *)0)) {
+    ast_append(arena, tree, n);
+    do {
+      ast_append(arena, tree, op);
+      ast_append(arena, tree, r_EXPR_REL(arena, parser));
+    } while ((op = r_OP_EQ(arena, parser)) != ((void *)0));
+  }
+  if (tree->num_children == 0)
+    return n;
+  return tree;
+}
 RULE_EXPR(EXPR_REL, RULE(OP_REL), EXPR_SUM);
 RULE_EXPR(EXPR_SUM, RULE(OP_SUM), EXPR_MUL);
 RULE_EXPR(EXPR_MUL, RULE(OP_MUL), EXPR_UNARY);
@@ -218,7 +241,7 @@ RULE_IMPL(EXPR_UNARY)
   // } else return RULE(PRIMARY);
 END_RULE
 
-RULE_OP(OP_EQ, 2, TokenType_EQUALS, TokenType_NOT_EQUALS);
+RULE_OP(OP_EQ, 4, TokenType_EQUALS, TokenType_NOT_EQUALS, TokenType_GT_EQUALS, TokenType_LT_EQUALS);
 RULE_OP(OP_REL, 2, TokenType_LANGLE, TokenType_RANGLE);
 RULE_OP(OP_SUM, 2, TokenType_PLUS, TokenType_MINUS);
 RULE_OP(OP_MUL, 2, TokenType_STAR, TokenType_FSLASH);
@@ -261,6 +284,8 @@ RULE_IMPL(LITERAL)
     } else ROOT_APPEND(n);
   } else if (NEXT_TOKEN == TokenType_HEX) SCAN_ADD(HEX);
   else if (NEXT_TOKEN == TokenType_OCTAL) SCAN_ADD(OCTAL);
+  else if (NEXT_TOKEN == TokenType_QUOTE) SCAN_ADD(QUOTE);
+  else if (NEXT_TOKEN == TokenType_STRING) SCAN_ADD(STRING);
   else SCAN_ADD(BINARY);
 END_RULE
 
@@ -314,7 +339,8 @@ RULE_IMPL(PRIMARY)
     BRANCH_APPEND(call, RULE(TUPLE));
     return call;
   }
-  if (FIRST(5, TokenType_NUMBER, TokenType_HEX, TokenType_OCTAL, TokenType_BINARY, TokenType_PERIOD)) return RULE(LITERAL);
+  if (FIRST(7, TokenType_NUMBER, TokenType_HEX, TokenType_OCTAL, TokenType_BINARY,
+            TokenType_PERIOD, TokenType_QUOTE, TokenType_STRING)) return RULE(LITERAL);
   return prefix;
 END_RULE
 
@@ -415,23 +441,47 @@ RULE_IMPL(TUPLE_TYPE_BODY_TYPE)
   }
 END_RULE
 
+// TYPE: ID | NUMBER | <TUPLE_TYPE> | TILDE <TYPE> | <TYPE> LBRACKET <EXPR> RBRACKET
+// | <TUPLE_TYPE> BIG_ARROW <TUPLE_TYPE>
+// | <TUPLE_TYPE> SMALL_ARROW <TUPLE_TYPE> BIG_ARROW <TUPLE_TYPE>
+// FIRST(<TUPLE_TYPE>) = LPAR
+// FOLLOW(<TUPLE_TYPE>) = SMALL_ARROW | BIG_ARROW
+// FOLLOW(LBRACKET) = { FIRST(<EXPR>) - NULL }
 RULE_IMPL(TYPE)
   AST *m, *s;
 
   // Handle simple types
-  if(FIRST(1, TokenType_ID)) SCAN_ADD(ID);
-  else if(FIRST(1, TokenType_NUMBER)) SCAN_ADD(NUMBER);
-  else if(FIRST(1, TokenType_LPAR)) {
+
+  switch(NEXT_TOKEN) {
+  case TokenType_ID:
+    SCAN_ADD(ID);
+    break;
+  case TokenType_NUMBER:
+    SCAN_ADD(NUMBER);
+    break;
+  case TokenType_LPAR:
     ROOT_APPEND(RULE(TUPLE_TYPE));
+    break;
+  case TokenType_TILDE:
+    SCAN_ADD(TILDE);
+    ROOT_APPEND(RULE(TYPE));
+    break;
+  default:
+    break;
   }
-  else if (FIRST(1, TokenType_STAR)) {
-    s = SCAN(STAR);
-    BRANCH_APPEND(m, RULE(TYPE));
-  }
-  else if (FIRST(1, TokenType_MUT)) {
-    m = SCAN(MUT);
-    BRANCH_APPEND(m, RULE(TYPE));
-  }
+  // if(FIRST(1, TokenType_ID)) SCAN_ADD(ID);
+  // else if(FIRST(1, TokenType_NUMBER)) SCAN_ADD(NUMBER);
+  // else if(FIRST(1, TokenType_LPAR)) {
+  //   ROOT_APPEND(RULE(TUPLE_TYPE));
+  // }
+  // else if (FIRST(1, TokenType_STAR)) {
+  //   s = SCAN(STAR);
+  //   BRANCH_APPEND(m, RULE(TYPE));
+  // }
+  // else if (FIRST(1, TokenType_MUT)) {
+  //   m = SCAN(MUT);
+  //   BRANCH_APPEND(m, RULE(TYPE));
+  // }
 
   // Handle methods and functions
   if (FIRST(2, TokenType_BIGARROW, TokenType_SMALLARROW)) {
@@ -441,6 +491,10 @@ RULE_IMPL(TYPE)
     }
     SCAN(BIGARROW);
     ROOT_APPEND(RULE(TUPLE_TYPE));
+  } else while (NEXT_TOKEN == TokenType_LBRACKET) {
+    SCAN(LBRACKET);
+    ROOT_APPEND(RULE(EXPR));
+    SCAN(RBRACKET);
   }
 END_RULE
 
