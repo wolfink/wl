@@ -2,7 +2,7 @@ load std.*; // "*" loads all libraries in std
 
 // Program calls print_number on a line of user input
 print_number(?#read_line());
-println#'\b' // remove extra space character and ends line
+println#'\b'; // remove extra space character and ends line
 
 // table macro creates a number of arrays that map onto given indices
 // structure is table#name(arg: type, ...) { num => (arg_value, ...), ... }

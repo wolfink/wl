@@ -1,7 +1,7 @@
-load std.io
+load std.io;
 
 r1 := 0..1...200;
-r2 := 0..(+1)...150; // Ranges with parenthesis allows you to specify an operation
+r2 := (i=0)..(i+1)...150; // Ranges with parenthesis allows you to specify an operation
 // The two statments below are equivalent
 // When two ranges in the same statment are unequal,
 // creates a nested for loop over both ranges
@@ -16,19 +16,17 @@ i := 0; while i < 200 {
 // start is a pointer to (or address of) type ll_node
 linked_list: (start: &ll_node, size: 32);
 
-create: (MemAlloc mem) -> () => (out: &linked_list) =
-{
+create: (mem: MemAlloc) -> () => (out: &linked_list) = do {
   out = mem->allocate(sizeof linked_list);
   out~.size = 0; // '~' dereferences a pointer/address type
   out~.start = create();
-}
+};
 
 ll_node: (next: &ll_node, value: 32);
 
-create: (MemAlloc mem) -> () => (out: &ll_node) =
-{
+create: (mem: MemAlloc) -> () => (out: &ll_node) = do {
   out = mem->allocate(sizeof ll_node);
-}
+};
 
 ll : &linked_list = create();
 curr_node := ll~.start~; //Dereferencing performs a shallow copy, use 'copy' function for a deep copy
@@ -45,7 +43,7 @@ for r1 {
 // The range below starts at ll*.start. Then it applies a dereference,
 // and accesses the member "next" at each step. Finally it end the range,
 // when ll.start.next...(.next~) == NULL
-r5 = ll.start..(.next)...NULL; // Equivalent to r1
+r5 := (i=ll.start)..(i.next)...NULL; // Equivalent to r1
 
 println# $r1
 println# $r2

@@ -158,6 +158,7 @@ RULE_IMPL(EXPR)
 
   if (FIRST(4, TokenType_IF, TokenType_FOR, TokenType_WHILE, TokenType_DO)) p = RULE(BLOCK_STMT);
   else if (t == TokenType_LOAD) p = RULE(LOAD);
+  else if (t == TokenType_SIZEOF) p = RULE(SIZEOF);
   else p = RULE(EXPR_OR);
   if (t == TokenType_ID) {
     while (NEXT_TOKEN == TokenType_LBRACKET) {
@@ -178,6 +179,8 @@ RULE_IMPL(EXPR)
   ROOT_APPEND(p);
 END_RULE
 
+// Operator precendence
+
 // RULE_EXPR: <LOWER_EXPR> OP <RULE_EXPR>
 // FIRST(OP) = TT1 | TT2 | .. | TTN
 // FOLLOW(LOWER_EXPR) = OP
@@ -185,29 +188,14 @@ RULE_EXPR(EXPR_OR, CHECK_SCAN(OR), EXPR_AND)
 RULE_EXPR(EXPR_AND, CHECK_SCAN(AND), EXPR_BW_OR)
 RULE_EXPR(EXPR_BW_OR, CHECK_SCAN(BW_OR), EXPR_BW_AND)
 RULE_EXPR(EXPR_BW_AND, CHECK_SCAN(BW_AND), EXPR_EQ)
-// RULE_EXPR(EXPR_EQ, RULE(OP_EQ), EXPR_REL)
-AST *r_EXPR_EQ(Arena *arena, Parser *parser) {
-  AST *tree = ast_create(arena, ASTType_EXPR_EQ, parser->lexer);
-  AST *op = ((void *)0);
-  AST *n = r_EXPR_REL(arena, parser);
-  if ((op = r_OP_EQ(arena, parser)) != ((void *)0)) {
-    ast_append(arena, tree, n);
-    do {
-      ast_append(arena, tree, op);
-      ast_append(arena, tree, r_EXPR_REL(arena, parser));
-    } while ((op = r_OP_EQ(arena, parser)) != ((void *)0));
-  }
-  if (tree->num_children == 0)
-    return n;
-  return tree;
-}
+RULE_EXPR(EXPR_EQ, RULE(OP_EQ), EXPR_REL)
 RULE_EXPR(EXPR_REL, RULE(OP_REL), EXPR_SUM);
 RULE_EXPR(EXPR_SUM, RULE(OP_SUM), EXPR_MUL);
 RULE_EXPR(EXPR_MUL, RULE(OP_MUL), EXPR_UNARY);
 
 // EXPR_UNARY: <PREFIX> <PRIMARY> <POSTFIX>
 // PREFIX: TILDE <PREFIX> | NULL
-// POSTFIX: COMMA <RANGE> | TILDE | NULL
+// POSTFIX: COMMA <RANGE> | TILDE <POSTFIX> | PERIOD ID
 // FIRST(<PREFIX>) = TILDE
 // FIRST(<PRIMARY>) = ID | LPAR
 // FIRST(<POSTFIX>) = DBL_PERIOD | TILDE
@@ -217,7 +205,7 @@ RULE_IMPL(EXPR_UNARY)
   AST* pre = NULL, *val = NULL, *post = NULL;
   // <PREFIX>
   while (NEXT_TOKEN == TokenType_TILDE) {
-    BRANCH_APPEND(pre, SCAN(TILDE));
+    pre = SCAN(TILDE);
   }
   // <PRIMARY>
   val = RULE(PRIMARY);
@@ -225,17 +213,29 @@ RULE_IMPL(EXPR_UNARY)
     BRANCH_APPEND(pre, val);
   }
   // <POSTFIX>
-  if (NEXT_TOKEN == TokenType_DBL_PERIOD) {
-    post = RULE(RANGE);
-    if (pre != NULL) BRANCH_APPEND(post, pre);
-    else BRANCH_APPEND(post, val);
-    ROOT_APPEND(post);
-  } else if (NEXT_TOKEN == TokenType_TILDE) while (NEXT_TOKEN == TokenType_TILDE) {
-    BRANCH_APPEND(post, SCAN(TILDE));
-    if (pre != NULL) BRANCH_APPEND(post, pre);
-    else BRANCH_APPEND(post, val);
-    ROOT_APPEND(post);
-  } else return val;
+  if (FIRST(3, TokenType_DBL_PERIOD, TokenType_PERIOD, TokenType_TILDE)) {
+    while (FIRST(3, TokenType_DBL_PERIOD, TokenType_PERIOD, TokenType_TILDE)) {
+      if (NEXT_TOKEN == TokenType_DBL_PERIOD) {
+        post = RULE(RANGE);
+        if (pre != NULL) BRANCH_APPEND(post, pre);
+        else BRANCH_APPEND(post, val);
+        ROOT_APPEND(post);
+        RETURN_ROOT;
+      } else if (NEXT_TOKEN == TokenType_PERIOD) {
+        post = SCAN(PERIOD);
+        if (pre != NULL) BRANCH_APPEND(post, pre);
+        else BRANCH_APPEND(post, val);
+        BRANCH_APPEND(post, SCAN(ID));
+        ROOT_APPEND(post);
+        continue;
+      }
+      post = SCAN(TILDE);
+      if (pre != NULL) BRANCH_APPEND(post, pre);
+      else BRANCH_APPEND(post, val);
+      ROOT_APPEND(post);
+    }
+  }
+  else return val;
   
   // if (op != NULL) while (op != NULL) {
   //   BRANCH_APPEND(op, RULE(PRIMARY));
@@ -260,7 +260,11 @@ END_RULE
 // RANGE: COMMA <EXPR>
 RULE_IMPL(RANGE)
   SCAN(DBL_PERIOD);
-  ROOT_APPEND(RULE(EXPR));
+  if (NEXT_TOKEN == TokenType_LPAR) {
+    SCAN(LPAR);
+    ROOT_APPEND(RULE(EXPR_OR));
+    SCAN(RPAR);
+  } else ROOT_APPEND(RULE(EXPR));
   SCAN(TPL_PERIOD);
   ROOT_APPEND(RULE(EXPR));
 END_RULE
@@ -319,9 +323,8 @@ RULE_IMPL(PROGRAM)
   // SCAN(EOF)
 END_RULE
 
-// PRIMARY: <TUPLE> | <VAR> | <PRIMARY_2> | <PRIMARY_3> | <LITERAL>
-// PRIMARY_2: <PRIMARY> <CALL>
-// PRIMARY_3: <PRIMARY_2> <METHOD>
+// PRIMARY: <TUPLE> | <VAR> | <PRIMARY_2> | <LITERAL>
+// PRIMARY_2: <PRIMARY> <CALL> | <PRIMARY> <METHOD>
 // FIRST(<TUPLE>) = LPAR
 // FIRST(<VAR>) = ID
 // FIRST(<CALL>) = LPAR
@@ -336,15 +339,22 @@ RULE_IMPL(PRIMARY)
     BRANCH_APPEND(call, prefix);
     BRANCH_APPEND(call, RULE(TUPLE));
     return call;
-  } else if (CHECK_SCAN(SMALLARROW) != NULL){
+  } else if (NEXT_TOKEN == TokenType_SMALLARROW){
     call = BRANCH_CREATE(METHOD);
+    SCAN(SMALLARROW);
     BRANCH_APPEND(call, prefix);
+    BRANCH_APPEND(call, SCAN(ID));
     BRANCH_APPEND(call, RULE(TUPLE));
     return call;
   }
   if (FIRST(7, TokenType_NUMBER, TokenType_HEX, TokenType_OCTAL, TokenType_BINARY,
             TokenType_PERIOD, TokenType_QUOTE, TokenType_STRING)) return RULE(LITERAL);
   return prefix;
+END_RULE
+
+RULE_IMPL(SIZEOF)
+  SCAN(SIZEOF);
+  RULE(EXPR);
 END_RULE
 
 RULE_IMPL(STMT)
@@ -465,8 +475,8 @@ RULE_IMPL(TYPE)
   case TokenType_LPAR:
     ROOT_APPEND(RULE(TUPLE_TYPE));
     break;
-  case TokenType_TILDE:
-    SCAN_ADD(TILDE);
+  case TokenType_BW_AND:
+    SCAN_ADD(BW_AND);
     ROOT_APPEND(RULE(TYPE));
     break;
   default:

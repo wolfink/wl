@@ -81,6 +81,7 @@
 #define TokenTypeTable6 \
   X(INLINE,       CHAR_SUM_6('i', 'n', 'l', 'i', 'n', 'e'), "inline")\
   X(SWITCH,       CHAR_SUM_6('s', 'w', 'i', 't', 'c', 'h'), "switch")\
+  X(SIZEOF,       CHAR_SUM_6('s', 'i', 'z', 'e', 'o', 'f'), "sizeof")\
 
 #define TokenTypeTableUnique \
   X(NEWLINE, '\n', "\"\\n\"")\
