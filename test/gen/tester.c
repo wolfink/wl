@@ -1,3 +1,4 @@
+#include<defs.h>
 #include<stdio.h>
 #include<string.h>
 #include<util.h>
@@ -46,8 +47,25 @@ int test_cfg_solo()
   return failed;
 }
 
+int test_cfg_file(const char* filename)
+{
+  FILE* file = fopen(filename, "r");
+  if (file == NULL) die(ANSI_COLOR_RED "error: " ANSI_COLOR_RESET "file not found\n");
+
+  Arena* local = arena_create_init(MB(1));
+  string* in = u_read_file(local, file);
+  Lexer* l = lexer_create(local, filename);
+  lexer_scan(l, in);
+  Parser* p = parser_create(local, l);
+  AST* tree = parser_generate_ast(p);
+  ControlFlowGraph* cfg = cfg_create(local);
+  cfg_scan_ast(cfg, tree);
+  return 0;
+}
+
 int main(int argc, char** argv)
 {
   if (argc < 2) return 1;
   if (strcmp(argv[1], "cfg_solo") == 0) return test_cfg_solo();
+  else if (IS_ARG("cfg_file")) return test_cfg_file(argv[2]);
 }

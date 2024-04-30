@@ -6,20 +6,6 @@
 #include <lexer.h>
 #include <defs.h>
 
-string* read_file(Arena* context, FILE* fp)
-{
-  Arena* a = arena_create();
-  char in_buffer[256];
-  string* ret = u_strnew(a, "");
-  while(fgets(in_buffer, 255, fp)) {
-    string* line = u_strnew(a, in_buffer);
-    ret = u_strcat(a, ret, line);
-  }
-  ret = u_strcpyar(context, ret);
-  arena_free(a);
-  return ret;
-}
-
 #define SHOW_LEXER  1
 #define SHOW_VALUES 1 << 1
 #define SHOW_PARSER 1 << 2
@@ -48,7 +34,7 @@ int main(int argc, char** argv)
   }
 
   FILE* fp = fopen(argv[1], "r");
-  string* in = read_file(a, fp);
+  string* in = u_read_file(a, fp);
 
   Lexer* l = lexer_create(a, argv[1]);
   const int l_fail = lexer_scan(l, in);

@@ -1,3 +1,4 @@
+#include<defs.h>
 #include<stdio.h>
 #include<string.h>
 #include<util.h>
@@ -31,9 +32,24 @@ int test_parser_solo()
   return failed;
 }
 
+int test_file(const char* filename)
+{
+  FILE* file = fopen(filename, "r");
+  if (file == NULL) die(ANSI_COLOR_RED "error: " ANSI_COLOR_RESET "file not found\n");
+
+  Arena* local = arena_create_init(MB(1));
+  string* in = u_read_file(local, file);
+  Lexer* l = lexer_create(local, filename);
+  lexer_scan(l, in);
+  Parser* p = parser_create(local, l);
+  AST* tree = parser_generate_ast(p);
+  return 0;
+}
+
 int main(int argc, char** argv)
 {
   if (argc < 2) return 1;
-  else if (strcmp(argv[1], "solo") == 0) return test_parser_solo();
+  else if (IS_ARG("solo")) return test_parser_solo();
+  else if (IS_ARG("file")) return test_file(argv[2]);
   return 1;
 }

@@ -1,7 +1,7 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#include <stdlib.h>
+#include <stdio.h>
 #include <ctype.h>
 
 #ifndef UTIL_INTERNAL_H
@@ -98,5 +98,6 @@ extern string*  u_strcats(Arena*, const string* restrict a, const char* restrict
 extern int      u_strcmp(const string* a, const string* b);
 extern string*  u_strslice(Arena*, const string*, size_t start, size_t end);
 extern void     u_prints(const string*);
+extern string*  u_read_file(Arena* context, FILE* fp);
 
 #endif

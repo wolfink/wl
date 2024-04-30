@@ -146,3 +146,18 @@ void u_prints(const string* str)
   for(int i = 0; i < len; i++)
     putchar(str[i]);
 }
+
+string* u_read_file(Arena* context, FILE* fp)
+{
+  Arena* a = arena_create();
+  char in_buffer[256];
+  string* ret = u_strnew(a, "");
+  while(fgets(in_buffer, 255, fp)) {
+    string* line = u_strnew(a, in_buffer);
+    ret = u_strcat(a, ret, line);
+  }
+  ret = u_strcpyar(context, ret);
+  arena_free(a);
+  return ret;
+}
+

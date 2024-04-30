@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <string.h>
+#include <defs.h>
 #include "lexer_test.h"
 #include "../test.h"
-
-#define IS_ARG(str) strcmp(argv[1], str) == 0
 
 int test_token(TokenType type, const char* cstr)
 {
@@ -76,10 +75,23 @@ int test_commands_solo()
   return 0;
 }
 
+int test_file(const char* filename)
+{
+  FILE* file = fopen(filename, "r");
+  if (file == NULL) die(ANSI_COLOR_RED "error: " ANSI_COLOR_RESET "file not found\n");
+
+  Arena* local = arena_create_init(MB(1));
+  string* in = u_read_file(local, file);
+  Lexer* l = lexer_create(local, filename);
+  lexer_scan(l, in);
+  return 0;
+}
+
 int main(int argc, char** argv)
 {
   if (argc < 2) return 1;
   if (IS_ARG("token")) return test_tokens();
   if (IS_ARG("solo")) return test_commands_solo();
+  if (IS_ARG("file")) return test_file(argv[2]);
   return 0;
 }

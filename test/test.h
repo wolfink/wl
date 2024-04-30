@@ -21,4 +21,7 @@ static char* test_commands[] = {
   "macro: #->() = { #->write(\"x: int = 1000\"); }; macro#;"
 };
 
+#define IS_ARG(str) strcmp(argv[1], str) == 0
+
+
 #endif
