@@ -3,6 +3,7 @@
 #include <string.h>
 #include <util.h>
 #include <parser.h>
+#include <cfg.h>
 #include <lexer.h>
 #include <defs.h>
 
@@ -25,13 +26,18 @@ int main(int argc, char** argv)
     usage();
   }
 
+  string* load_path = NULL;
+
   for(int i = 2; i < argc; i++)
   {
-    if (strcmp(argv[i], "-l") == 0)      flags |= SHOW_LEXER;
-    else if (strcmp(argv[i], "-v") == 0) flags |= SHOW_VALUES;
-    else if (strcmp(argv[i], "-p") == 0) flags |= SHOW_PARSER;
+#define IS_ARG(arg) strcmp(argv[i], arg) == 0
+    if (IS_ARG("-l")) flags |= SHOW_LEXER;
+    else if (IS_ARG("-v")) flags |= SHOW_VALUES;
+    else if (IS_ARG("-p")) flags |= SHOW_PARSER;
+    else if (IS_ARG("--load-path=")) load_path = u_strnew(a, argv[2]);
     else  usage();
   }
+  if (load_path == NULL) load_path = u_strnew(a, "/usr/lib/wl/");
 
   FILE* fp = fopen(argv[1], "r");
   string* in = u_read_file(a, fp);
@@ -40,10 +46,12 @@ int main(int argc, char** argv)
   const int l_fail = lexer_scan(l, in);
   if (l_fail) die("%s:" ANSI_COLOR_RED " error: " ANSI_COLOR_RESET "lexer failed to read file\n", argv[1]);
   if (flags & SHOW_LEXER) {
+    Arena* b = arena_create();
     printf("== Lexer output ============\n\n");
-    string* out = lexer_to_string(a, l);
+    string* out = lexer_to_string(b, l);
     u_prints(out);
     printf("\n\n== End Lexer output ========\n\n");
+    arena_free(b);
   }
 
   if (flags & SHOW_VALUES) {
@@ -65,10 +73,23 @@ int main(int argc, char** argv)
   Parser* p = parser_create(a, l);
   AST* ast = parser_generate_ast(p);
   if (flags & SHOW_PARSER) {
+    Arena* b = arena_create();
     printf("\n\n== Parser ouput ============\n\n");
-    string* out = ast_to_string(a, ast, 0);
+    string* out = ast_to_string(b, ast, 0);
     u_prints(out);
     printf("\n== End Parser output========\n\n");
+    arena_free(b);
+  }
+
+  ControlFlowGraph* c = cfg_create(a);
+  cfg_scan_ast(c, p);
+  if (flags & SHOW_PARSER) {
+    Arena* b = arena_create();
+    printf("\n\n== CFG output ==============\n\n");
+    string* out = cfg_to_string(b, c);
+    u_prints(out);
+    printf("\n== End CFG output ==========\n\n");
+    arena_free(b);
   }
 
   arena_free(a);

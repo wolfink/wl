@@ -4,10 +4,9 @@
 #include <util.h>
 #include <parser.h>
 
-#ifndef GEN_INTERNAL_H
+typedef struct {} Generator;
 
-#endif
-
-extern string* gen_code_from_parser(Arena*, Parser*);
+Generator* generator_create(Arena*, const char* filename);
+void       generate(Generator*);
 
 #endif

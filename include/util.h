@@ -5,7 +5,7 @@
 #include <ctype.h>
 
 #ifndef UTIL_INTERNAL_H
-typedef void Arena;
+typedef struct {} Arena;
 #endif
 
 typedef char string;

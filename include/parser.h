@@ -9,7 +9,7 @@
 
 #include "../src/parser/parser_shared.h"
 typedef void Parser;
-typedef void AST;
+typedef struct {} AST;
 
 #endif
 

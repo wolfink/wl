@@ -6,7 +6,7 @@
 #ifndef LEXER_INTERNAL_H
 
 #include "../src/lexer/lexer_shared.h"
-typedef void Lexer;
+typedef struct {} Lexer;
 
 #endif
 
