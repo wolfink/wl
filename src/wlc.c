@@ -4,6 +4,7 @@
 #include <util.h>
 #include <parser.h>
 #include <cfg.h>
+#include <gen.h>
 #include <lexer.h>
 #include <defs.h>
 
@@ -91,6 +92,9 @@ int main(int argc, char** argv)
     printf("\n== End CFG output ==========\n\n");
     arena_free(b);
   }
+
+  Generator* g = generator_create(a, "a.s");
+  generate(g);
 
   arena_free(a);
   return 0;

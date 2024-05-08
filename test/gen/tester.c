@@ -6,7 +6,7 @@
 #include<parser.h>
 
 #include<gen.h>
-#include"../../src/gen/cfg.h"
+#include<cfg.h>
 #include"cfg_test.h"
 #include"../test.h"
 

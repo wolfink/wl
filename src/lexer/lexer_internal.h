@@ -35,7 +35,6 @@ char *token_type_str[TokenType_COUNT] = {
 vector_template(Token);
 typedef vector_Token Line;
 
-vector_template(object);
 typedef vector_object vector_Line;
 
 string* line_to_string(Arena*, const Line* line);

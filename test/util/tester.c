@@ -90,12 +90,6 @@ int test_arena_alloc()
   return 0;
 }
 
-vector_template(int);
-vector_impl(int, 100);
-
-vector_template(object);
-vector_impl(object, 50);
-
 typedef struct point { int x; int y; } point;
 
 int test_vector_create()

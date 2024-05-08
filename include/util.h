@@ -20,6 +20,7 @@ typedef char string;
     type* values;\
   } vector_##type;\
   vector_##type* vector_##type##_create(Arena* arena);\
+  void vector_##type##_init(Arena* arena, vector_##type* v);\
   void vector_##type##_resize(vector_##type* vector);\
   void vector_##type##_add(vector_##type* vector, type value);\
 
@@ -27,11 +28,15 @@ typedef char string;
   vector_##type* vector_##type##_create(Arena* arena)\
   {\
     vector_##type* out = arena_alloc(arena, sizeof(vector_##type));\
-    out->mem = arena;\
-    out->size = default_size;\
-    out->len = 0;\
-    out->values = arena_alloc(arena, sizeof(type) * default_size);\
+    vector_##type##_init(arena, out);\
     return out;\
+  }\
+  void vector_##type##_init(Arena* arena, vector_##type* v)\
+  {\
+    v->mem = arena;\
+    v->size = default_size;\
+    v->len = 0;\
+    v->values = arena_alloc(arena, sizeof(type) * default_size);\
   }\
   void vector_##type##_resize(vector_##type* vector)\
   {\
@@ -48,11 +53,18 @@ typedef char string;
     vector->values[vector->len++] = value;\
   }\
 
+#define vector_init(type) vector_##type##_init
 #define vector_create(type) vector_##type##_create
 #define vector_add(type) vector_##type##_add
 
 typedef void* object;
 typedef int (*CTypeFunction)(char);
+
+vector_template(int);
+vector_template(size_t);
+vector_template(float);
+vector_template(double);
+vector_template(object);
 
 static inline int is_alpha(char c)  { return isalpha(c); }
 static inline int is_alnum(char c)  { return isalnum(c); }

@@ -22,7 +22,6 @@ string* token_type_tostr(Arena* a, TokenType t)
 }
 
 vector_impl(Token, 100)
-vector_impl(object, 100)
 
 // TODO: fix function
 // int lexer_resize(Arena* a, Lexer* lex, size_t new_size)
