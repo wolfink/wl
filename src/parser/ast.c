@@ -1,5 +1,6 @@
-#include "ast.h"
-#include "parser_shared.h"
+#define AST_INTERNAL
+
+#include <ast.h>
 #include <memory.h>
 #include <defs.h>
 

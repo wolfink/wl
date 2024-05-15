@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <err.h>
 #include <string.h>
-#include <util.h>
 #include <parser.h>
 #include <cfg.h>
 #include <gen.h>
@@ -83,7 +82,7 @@ int main(int argc, char** argv)
   }
 
   ControlFlowGraph* c = cfg_create(a);
-  cfg_scan_ast(c, p);
+  cfg_scan_ast(c, ast);
   if (flags & SHOW_PARSER) {
     Arena* b = arena_create();
     printf("\n\n== CFG output ==============\n\n");

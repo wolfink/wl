@@ -1,5 +1,7 @@
-#ifndef PARSER_SHARED_H
-#define PARSER_SHARED_H
+#ifndef AST_H
+#define AST_H
+
+#include <lexer.h>
 
 #define ListRules \
   X(STMT_LIST, "STMT_LIST") \
@@ -84,5 +86,28 @@ typedef enum
   ASTType_TOKEN,
   ASTType_COUNT,
 } ASTType;
+
+#ifdef AST_INTERNAL
+
+typedef struct AST
+{
+  size_t size;
+  size_t num_children;
+
+  Lexer* lexer;
+  ASTType type;
+  size_t token_line;
+  size_t token_idx;
+  struct AST** children;
+
+} AST;
+
+#else
+
+typedef struct {} AST;
+
+#endif
+
+string* ast_to_string(Arena*, AST*, int indent);
 
 #endif

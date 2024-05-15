@@ -1,7 +1,6 @@
 #ifndef LEXER_TEST_H
 #define LEXER_TEST_H
 
-#include <util.h>
 #include <lexer.h>
 
 size_t test_command_ids[] = {

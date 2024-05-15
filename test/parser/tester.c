@@ -1,11 +1,10 @@
-#include<defs.h>
-#include<stdio.h>
-#include<string.h>
-#include<util.h>
-#include<lexer.h>
-#include<parser.h>
-#include"parser_test.h"
-#include"../test.h"
+#include <defs.h>
+#include <stdio.h>
+#include <string.h>
+#include <lexer.h>
+#include <parser.h>
+#include "parser_test.h"
+#include "../test.h"
 
 int test_parser_solo()
 {

@@ -1,6 +1,6 @@
 #include <defs.h>
-#include <util.h>
 #include <parser.h>
+#include <cfg.h>
 
 #define WLC_VERSION "0.1.0"
 #define WLC_DATE ""
@@ -8,11 +8,13 @@
 typedef struct {
   string* filename;
   FILE* file;
+  ControlFlowGraph* cfg;
 } Generator;
 
 void generate_globals(Generator* gen);
 void generate_functions(Generator* gen);
 void generate_start(Generator* gen);
+void generate_instruction(Generator* gen, size_t node_no, size_t index);
 
 Generator* generator_create(Arena* context, const char* filename)
 {
@@ -67,4 +69,8 @@ void generate_functions(Generator* gen)
 void generate_start(Generator* gen)
 {
   return;
+}
+
+void generate_instruction(Generator* gen, size_t node_no, size_t index)
+{
 }

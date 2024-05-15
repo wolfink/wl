@@ -1,14 +1,13 @@
-#include<defs.h>
-#include<stdio.h>
-#include<string.h>
-#include<util.h>
-#include<lexer.h>
-#include<parser.h>
+#include <defs.h>
+#include <stdio.h>
+#include <string.h>
+#include <lexer.h>
+#include <parser.h>
 
-#include<gen.h>
-#include<cfg.h>
-#include"cfg_test.h"
-#include"../test.h"
+#include <gen.h>
+#include <cfg.h>
+#include "cfg_test.h"
+#include "../test.h"
 
 int test_cfg_solo()
 {

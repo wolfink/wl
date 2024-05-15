@@ -1,5 +1,5 @@
 #include <memory.h>
-#include <util.h>
+#include <util/vector.h>
 #include <defs.h>
 #include <stdio.h>
 #include <parser.h>
@@ -7,21 +7,17 @@
 struct CFG;
 
 typedef struct {
-  // size_t stmt_len;
-  // size_t stmt_size;
-  // AST**  stmts;
   vector_object stmts;
-  // size_t conn_len;
-  // size_t conn_size;
-  // size_t* connection_list;
   vector_size_t connection_list;
   struct CFG* parent;
+  size_t environment;
+  int generated;
 } ControlFlowGraphNode;
 
 typedef struct CFG {
   vector_object node_list;
-  Arena* memory;
   vector_size_t functions;
+  Arena* memory;
 } ControlFlowGraph;
 
 void cfg_populate_node(ControlFlowGraph*, ControlFlowGraphNode*, AST*);
@@ -39,7 +35,15 @@ ControlFlowGraph* cfg_create(Arena* context)
 {
   ControlFlowGraph* cfg = arena_alloc(context, sizeof(ControlFlowGraph));
   cfg->memory = context;
+  vector_object_init(cfg->memory, (vector_object*) cfg);
+  vector_size_t_init(cfg->memory, &cfg->functions);
   return cfg;
+}
+
+AST* cfg_get_stmt(ControlFlowGraph* c, size_t node_no, size_t index)
+{
+  ControlFlowGraphNode* node = c->node_list.values[node_no];
+  return node->stmts.values[index];
 }
 
 void cfg_scan_ast(ControlFlowGraph* c, AST* in)
@@ -222,9 +226,6 @@ string* cfg_to_string(Arena* context, ControlFlowGraph* c)
   return ret;
 }
 
-#define DEFAULT_CFGN_CONN_SIZE 2
-#define DEFAULT_CFGN_STMT_SIZE 10
-
 ControlFlowGraphNode* cfgn_create(ControlFlowGraph* c) {
   NULL_CHECK(c, cfgn_create)
 
@@ -232,6 +233,7 @@ ControlFlowGraphNode* cfgn_create(ControlFlowGraph* c) {
   out->parent = c;
   vector_object_init(c->memory, (vector_object*) out);
   vector_size_t_init(c->memory, &out->connection_list);
+  out->generated = 0;
   return out;
 }
 

@@ -1,9 +1,12 @@
-#include "util_internal.h"
-#include "../include/util.h"
+#include <util/string.h>
+#include <util/core.h>
 #include <memory.h>
 #include <stdio.h>
 #include <string.h>
 #include <defs.h>
+
+#define STR_SIZE(str) *(size_t*) (str - sizeof(size_t))
+#define STR_PTR(size) (string*)(size + 1)
 
 string* u_stralloc(Arena* a, size_t len)
 {
@@ -108,7 +111,7 @@ string* u_strcats(Arena* context, const string* restrict a, const char* restrict
   return u_strcat(context, a, b_str);
 }
 
-int u_strcmp(const string* a, const string* b)
+int u_strcmp(const string * a, const string* b)
 {
   if (!a) die("u_strcmp: attempt to compare NULL strings\n");
   if (!b) die("u_strcmp: attempt to compare NULL strings\n");

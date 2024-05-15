@@ -2,16 +2,26 @@
 #define PARSER_H
 
 #include <stdlib.h>
-#include <util.h>
 #include <lexer.h>
+#include <ast.h>
 
-#ifndef PARSER_INTERNAL_H
+#ifdef PARSER_INTERNAL
 
-#include "../src/parser/parser_shared.h"
-typedef void Parser;
-typedef struct {} AST;
+typedef struct
+{
+  Arena* context;
+  size_t token_idx;
+  size_t line_no;
+  Lexer* lexer;
+} Parser;
+
+#else
+
+// #include "../src/parser/parser_shared.h"
+typedef struct {} Parser;
 
 #endif
+
 
 Parser*  parser_create(Arena*, Lexer*);
 AST*     parser_generate_ast(Parser*);

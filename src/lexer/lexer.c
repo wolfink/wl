@@ -1,11 +1,27 @@
-#include "lexer_internal.h"
-#include "../include/lexer.h"
-#include "../include/defs.h"
+#define LEXER_INTERNAL
+
+// #include "lexer_internal.h"
+// #include "../include/lexer.h"
+// #include "../include/defs.h"
+#include <defs.h>
+#include <lexer.h>
 #include <ctype.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <string.h>
+
+#define MAX_TOKEN_LEN KB(1) - 1
+#define LEXER_DEFAULT_SIZE KB(80)
+
+char *token_type_str[TokenType_COUNT] = {
+#define X(name, first, str) str,
+  TokenTypeTable
+#undef X
+};
+
+vector_impl(Token, 100);
+string* line_to_string(Arena* context, const Line* line);
 
 string* token_type_tostr(Arena* a, TokenType t)
 {
@@ -21,7 +37,6 @@ string* token_type_tostr(Arena* a, TokenType t)
   }
 }
 
-vector_impl(Token, 100)
 
 // TODO: fix function
 // int lexer_resize(Arena* a, Lexer* lex, size_t new_size)

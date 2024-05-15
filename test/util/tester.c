@@ -1,6 +1,9 @@
-#include <stdio.h>
+#include <util/arena.h>
+#include <util/vector.h>
+#include <util/core.h>
+#include <util/string.h>
+#include <util/hash_map.h>
 #include <string.h>
-#include <util.h>
 
 int test_strcat()
 {
@@ -111,10 +114,24 @@ int test_vector_add()
 {
   Arena* a = arena_create();
   vector_int* vi = vector_create(int)(a);
-  for (int i = 0; i < 1000000; i++) {
-    vector_add(int)(vi, i);
-    if (vi->values[i] != i) return 1;
-  }
+  for (int i = 0; i < 1000000; i++) vector_add(int)(vi, i);
+  for (int i = 0; i < 1000000; i++) if (vi->values[i] != i) return 1;
+  return 0;
+}
+
+int test_hash()
+{
+  Arena* a = arena_create();
+
+  HashSet(string_ptr)* hs = hash_set_create(string_ptr)(a, 1000);
+  hash_set_add(string_ptr, hs, u_strnew(a, "hello"));
+  if (!hash_set_contains(string_ptr)(hs, u_strnew(a, "hello"))) return 1;
+  hash_set_add(string_ptr, hs, u_strnew(a, "goodbye"));
+  if (!hash_set_contains(string_ptr)(hs, u_strnew(a, "goodbye"))) return 1;
+  hash_set_add(string_ptr, hs, u_strnew(a, "tell me why"));
+  if (!hash_set_contains(string_ptr)(hs, u_strnew(a, "tell me why"))) return 1;
+
+  arena_free(a);
   return 0;
 }
 
@@ -127,5 +144,6 @@ int main(int argc, char** argv)
   if (strcmp(argv[1], "strcat") == 0) return test_strcat();
   if (strcmp(argv[1], "vector_create") == 0) return test_vector_create();
   if (strcmp(argv[1], "vector_add") == 0) return test_vector_add();
+  if (strcmp(argv[1], "hash") == 0) return test_hash();
   return 1;
 }

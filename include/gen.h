@@ -1,7 +1,7 @@
 #ifndef GEN_H
 #define GEN_H
 
-#include <util.h>
+#include <util/arena.h>
 #include <parser.h>
 
 typedef struct {} Generator;

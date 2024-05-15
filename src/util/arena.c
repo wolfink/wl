@@ -1,8 +1,11 @@
-#include "util_internal.h"
-#include "../include/util.h"
+#define ARENA_INTERNAL
+
+#include <util/arena.h>
+#include <util/core.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+#define DEFAULT_ARENA_SIZE 1024
 #define STATIC 1
 
 int arena_node_init (ArenaNode* node, size_t size)
