@@ -5,6 +5,9 @@
 #include <util/hash_map.h>
 #include <string.h>
 
+typedef struct point { int x; int y; } point;
+typedef point* point_ptr;
+
 int test_strcat()
 {
   Arena* a = arena_create();
@@ -93,8 +96,6 @@ int test_arena_alloc()
   return 0;
 }
 
-typedef struct point { int x; int y; } point;
-
 int test_vector_create()
 {
   Arena* a = arena_create();
@@ -110,6 +111,11 @@ int test_vector_create()
   return 0;
 }
 
+
+typedef string* string_ptr;
+hash_set_template(string_ptr)
+hash_map_template(point_ptr, string_ptr)
+
 int test_vector_add()
 {
   Arena* a = arena_create();
@@ -119,17 +125,83 @@ int test_vector_add()
   return 0;
 }
 
+int string_hash_map_compare(string* a, string* b)
+{
+  return u_strcmp(a, b) == 0;
+}
+
+// Always collides
+size_t point_hash(point* s)
+{
+  return 0;
+}
+
+int point_cmp(point* a, point* b)
+{
+  return a->x == b->x && a->y == b->y;
+}
+
+hash_set_impl(string_ptr, u_string_hash, string_hash_map_compare)
+hash_map_impl(point_ptr, string_ptr, point_hash, point_cmp)
+
 int test_hash()
 {
-  Arena* a = arena_create();
 
+  char* c1 = "hello";
+  char* c2 = "goodbye";
+  char* c3 = "tell me why";
+
+  Arena* a = arena_create();
+  string* s1 = u_strnew(a, c1);
+  string* s2 = u_strnew(a, c2);
+  string* s3 = u_strnew(a, c3);
+  string* s4 = u_strcat(a, u_strcat(a, s1, s2), s3);
+  string* s5 = u_strcats(a, s4, ", oh my!");
+
+  Arena* b = arena_create();
   HashSet(string_ptr)* hs = hash_set_create(string_ptr)(a, 1000);
-  hash_set_add(string_ptr, hs, u_strnew(a, "hello"));
-  if (!hash_set_contains(string_ptr)(hs, u_strnew(a, "hello"))) return 1;
-  hash_set_add(string_ptr, hs, u_strnew(a, "goodbye"));
-  if (!hash_set_contains(string_ptr)(hs, u_strnew(a, "goodbye"))) return 1;
-  hash_set_add(string_ptr, hs, u_strnew(a, "tell me why"));
-  if (!hash_set_contains(string_ptr)(hs, u_strnew(a, "tell me why"))) return 1;
+  hash_set_add(string_ptr, hs, s1);
+  if (!hash_set_contains(string_ptr)(hs, u_strcpyar(b, s1))) return 1;
+  hash_set_add(string_ptr, hs, s2);
+  if (!hash_set_contains(string_ptr)(hs, u_strcpyar(b, s2))) return 1;
+  hash_set_add(string_ptr, hs, s3);
+  if (!hash_set_contains(string_ptr)(hs, u_strcpyar(b, s3))) return 1;
+  hash_set_add(string_ptr, hs, s4);
+  if (!hash_set_contains(string_ptr)(hs, u_strcpyar(b, s4))) return 1;
+  hash_set_add(string_ptr, hs, s5);
+  if (!hash_set_contains(string_ptr)(hs, u_strcpyar(b, s5))) return 1;
+  arena_free(a);
+  arena_free(b);
+
+  a = arena_create();
+
+  // Test hash map collisions
+  point p1 = {2, 1};
+  point p2 = {0, 2};
+  point p3 = {-2, 3};
+  point p4 = {6, -1};
+
+  point p1c = p1;
+  point p2c = p2;
+  point p3c = p3;
+  point p4c = p4;
+
+  HashMap(point_ptr, string_ptr)* hs2 = hash_map_create(point_ptr, string_ptr)(a, 1000);
+  hash_map_add(point_ptr, string_ptr)(hs2, &p1, s1);
+  hash_map_add(point_ptr, string_ptr)(hs2, &p2, s2);
+  hash_map_add(point_ptr, string_ptr)(hs2, &p3, s3);
+  hash_map_add(point_ptr, string_ptr)(hs2, &p4, s2);
+
+  optional(string_ptr) opt;
+  #define test_point(p, s)\
+    opt = hash_map_get(point_ptr, string_ptr)(hs2, &p);\
+    if (opt.result == NONE) return 1;\
+    else if (u_strcmp(opt.value, s) != 0) return 2;\
+
+  test_point(p1c, s1)
+  test_point(p2c, s2)
+  test_point(p3c, s3)
+  test_point(p4c, s2)
 
   arena_free(a);
   return 0;

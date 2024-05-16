@@ -164,3 +164,14 @@ string* u_read_file(Arena* context, FILE* fp)
   return ret;
 }
 
+size_t u_string_hash(string* in)
+{
+  string* in_str = in;
+  size_t* in_num = (size_t*) in;
+  size_t in_len = u_strlen(in_str);
+  size_t out = 0;
+  size_t i = 0; while(i < in_len / 8) out ^= in_num[i++];
+  out ^= in_num[i] & (size_t) -1 >> 8 * (8 - in_len % 8);
+  return out;
+}
+

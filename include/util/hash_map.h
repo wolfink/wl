@@ -101,7 +101,4 @@ int hash_map_##A##_##B##_contains(HashMap(A, B)* h, A a)\
 #define hash_set_get(T) hash_map_##T##_int_get
 #define hash_set_contains(T) hash_map_##T##_int_contains
 
-typedef string* string_ptr;
-hash_set_template(string_ptr)
-
 #endif

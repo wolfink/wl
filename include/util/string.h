@@ -19,5 +19,6 @@ extern int      u_strcmp(const string* a, const string* b);
 extern string*  u_strslice(Arena*, const string*, size_t start, size_t end);
 extern void     u_prints(const string*);
 extern string*  u_read_file(Arena* context, FILE* fp);
+extern size_t   u_string_hash(string*);
 
 #endif
