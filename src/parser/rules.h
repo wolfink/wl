@@ -2,7 +2,6 @@
 #define AST_INTERNAL
 
 #include <ast.h>
-#include "parser_internal.h"
 #include <parser.h>
 #include <stdarg.h>
 

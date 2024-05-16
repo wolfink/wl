@@ -3,7 +3,6 @@
 
 #include <defs.h>
 
-#include "parser_internal.h"
 #include "rules.h"
 
 void skip(Parser* p) { p->token_idx++; }
