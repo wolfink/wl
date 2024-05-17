@@ -2,6 +2,7 @@
 #define UTIL_VECTOR_H
 
 #include <stdlib.h>
+#include <memory.h>
 #include "arena.h"
 #include "core.h"
 

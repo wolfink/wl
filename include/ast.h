@@ -91,20 +91,25 @@ typedef enum
 
 typedef struct AST
 {
-  size_t size;
-  size_t num_children;
-
-  Lexer* lexer;
   ASTType type;
+  Lexer* lexer;
+  struct AST** children;
   size_t token_line;
   size_t token_idx;
-  struct AST** children;
 
+  size_t size;
+  size_t num_children;
 } AST;
 
 #else
 
-typedef struct {} AST;
+typedef struct AST{
+  const ASTType type;
+  Lexer* const lexer;
+  struct AST *const *const children;
+  const size_t token_line;
+  const size_t token_idx;
+} AST;
 
 #endif
 

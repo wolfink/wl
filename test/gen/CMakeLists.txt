@@ -12,3 +12,4 @@ add_test(NAME gen_cfg_test_example_03 COMMAND gen_test cfg_file ${CMAKE_SOURCE_D
 add_test(NAME gen_cfg_test_example_04 COMMAND gen_test cfg_file ${CMAKE_SOURCE_DIR}/examples/04_char_count.wl)
 add_test(NAME gen_cfg_test_example_05 COMMAND gen_test cfg_file ${CMAKE_SOURCE_DIR}/examples/05_pow.wl)
 add_test(NAME gen_cfg_test_example_08 COMMAND gen_test cfg_file ${CMAKE_SOURCE_DIR}/examples/08_ranges.wl)
+add_test(NAME gen_envman_test COMMAND gen_test envman)
