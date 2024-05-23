@@ -96,7 +96,7 @@ int test_environment_manager()
     AST* var = ast_get_var(ast);
     if (var == NULL) continue;
 
-    environment_add_variable(u_strnew(b, "default"), var);
+    // environment_add_variable(u_strnew(b, "default"), var);
     arena_free(b);
   }
   return 0;

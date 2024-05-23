@@ -8,25 +8,32 @@ struct CFG;
 
 typedef struct {
   vector_object stmts;
+  string* environment;
+  size_t scope_no;
+  int generated;
+
   vector_size_t connection_list;
   struct CFG* parent;
-  size_t environment;
-  int generated;
 } ControlFlowGraphNode;
+
+typedef string* string_ptr;
+vector_template(string_ptr)
+vector_impl(string_ptr, 100)
 
 typedef struct CFG {
   vector_object node_list;
-  vector_size_t functions;
+  string* environment;
+  // vector_string_ptr scopes;
   Arena* memory;
 } ControlFlowGraph;
 
-void cfg_populate_node(ControlFlowGraph*, ControlFlowGraphNode*, AST*);
-size_t cfg_handle_branch(ControlFlowGraph*, AST* branch_stmt);
-size_t cfg_handle_do(ControlFlowGraph*, AST* do_stmt);
-size_t cfg_handle_while(ControlFlowGraph*, AST* while_stmt);
+void cfg_populate_node(ControlFlowGraph*, ControlFlowGraphNode*, AST*, size_t scope_no);
+size_t cfg_handle_branch(ControlFlowGraph*, AST* branch_stmt, size_t scope_no);
+size_t cfg_handle_do(ControlFlowGraph*, AST* do_stmt, size_t scope_no);
+size_t cfg_handle_while(ControlFlowGraph*, AST* while_stmt, size_t scope_no);
 void cfg_add_node(ControlFlowGraph*, ControlFlowGraphNode*);
 
-ControlFlowGraphNode* cfgn_create(ControlFlowGraph*);
+ControlFlowGraphNode* cfgn_create(ControlFlowGraph*, size_t scope_no);
 void cfgn_add_connection(ControlFlowGraphNode* n, size_t index);
 void cfgn_add_stmt(ControlFlowGraphNode* n, AST* stmt);
 string* cfgn_to_string(Arena* context, ControlFlowGraphNode*, size_t index);
@@ -35,8 +42,9 @@ ControlFlowGraph* cfg_create(Arena* context)
 {
   ControlFlowGraph* cfg = arena_alloc(context, sizeof(ControlFlowGraph));
   cfg->memory = context;
-  vector_object_init(cfg->memory, (vector_object*) cfg);
-  vector_size_t_init(cfg->memory, &cfg->functions);
+  cfg->environment = u_strnew(context, "public");
+  vector_init(object)(cfg->memory, (vector_object*) cfg);
+  // vector_init(string_ptr)(cfg->memory, &cfg->scopes);
   return cfg;
 }
 
@@ -50,11 +58,11 @@ void cfg_scan_ast(ControlFlowGraph* c, AST* in)
 {
   NULL_CHECK(c, cfg_scan_ast)
 
-  ControlFlowGraphNode* main_node = cfgn_create(c);
-  cfg_populate_node(c, main_node, in);
+  ControlFlowGraphNode* main_node = cfgn_create(c, 0);
+  cfg_populate_node(c, main_node, in, 0);
 }
 
-void cfg_populate_node(ControlFlowGraph* c, ControlFlowGraphNode* n, AST* in)
+void cfg_populate_node(ControlFlowGraph* c, ControlFlowGraphNode* n, AST* in, size_t scope_no)
 {
   NULL_CHECK(c, cfg_populate_node)
   NULL_CHECK(n, cfg_populate_node)
@@ -80,7 +88,7 @@ void cfg_populate_node(ControlFlowGraph* c, ControlFlowGraphNode* n, AST* in)
       const size_t cond_branch = c->node_list.len;
       cfgn_add_connection(n, cond_branch);
 
-      const size_t next_branch = cfg_handle_branch(c, stmt_body);
+      const size_t next_branch = cfg_handle_branch(c, stmt_body, scope_no);
       n = c->node_list.values[next_branch]; // Switch to continue branch
     } break;
     case ASTType_DO: case ASTType_CALL: {
@@ -89,7 +97,7 @@ void cfg_populate_node(ControlFlowGraph* c, ControlFlowGraphNode* n, AST* in)
       const size_t cond_branch = c->node_list.len; 
       cfgn_add_connection(n, cond_branch);
 
-      const size_t next_branch = cfg_handle_while(c, stmt_body);
+      const size_t next_branch = cfg_handle_while(c, stmt_body, scope_no);
       n = c->node_list.values[next_branch];
     } break;
     default:
@@ -109,7 +117,7 @@ void cfg_add_node(ControlFlowGraph* cfg, ControlFlowGraphNode* n)
 }
 
 // Returns: index of the continuing branch
-size_t cfg_handle_branch(ControlFlowGraph* cfg, AST* branch_ast)
+size_t cfg_handle_branch(ControlFlowGraph* cfg, AST* branch_ast, size_t scope_no)
 {
   NULL_CHECK(cfg, cfg_handle_branch)
 
@@ -126,17 +134,17 @@ size_t cfg_handle_branch(ControlFlowGraph* cfg, AST* branch_ast)
   const size_t else_idx = cond_idx + 2;
   const size_t next_idx = cond_idx + 3;
 
-  ControlFlowGraphNode* cond_node = cfgn_create(cfg);
-  ControlFlowGraphNode* then_node = cfgn_create(cfg);
-  ControlFlowGraphNode* else_node = cfgn_create(cfg);
-  ControlFlowGraphNode* next_node = cfgn_create(cfg);
+  ControlFlowGraphNode* cond_node = cfgn_create(cfg, scope_no);
+  ControlFlowGraphNode* then_node = cfgn_create(cfg, then_idx);
+  ControlFlowGraphNode* else_node = cfgn_create(cfg, else_idx);
+  ControlFlowGraphNode* next_node = cfgn_create(cfg, scope_no);
 
   // Place child CFG's in control of parent code block's child code blocks
   cfg_add_node(cfg, cond_node);
   cond_node->stmts.values[0] = ast_get_child(branch_ast, 0);
   cond_node->stmts.len = 1;
-  cfg_populate_node(cfg, then_node, ast_get_child(branch_ast, 1));
-  cfg_populate_node(cfg, else_node, ast_get_child(branch_ast, 2));
+  cfg_populate_node(cfg, then_node, ast_get_child(branch_ast, 1), then_idx);
+  cfg_populate_node(cfg, else_node, ast_get_child(branch_ast, 2), else_idx);
   cfg_add_node(cfg, next_node);
 
   cfgn_add_connection(cond_node, then_idx);
@@ -159,7 +167,7 @@ size_t cfg_handle_branch(ControlFlowGraph* cfg, AST* branch_ast)
   return next_idx;
 }
 
-size_t cfg_handle_do(ControlFlowGraph* cfg, AST* do_ast)
+size_t cfg_handle_do(ControlFlowGraph* cfg, AST* do_ast, size_t scope_no)
 {
   NULL_CHECK(cfg,      cfg_handle_do)
 
@@ -167,18 +175,18 @@ size_t cfg_handle_do(ControlFlowGraph* cfg, AST* do_ast)
     die("error: cfg_handle_do: expected DO stmt\n");
   }
 
-  ControlFlowGraphNode* block_node = cfgn_create(cfg);
-  ControlFlowGraphNode* next_node  = cfgn_create(cfg);
-
   const size_t block_idx = cfg->node_list.len;
   const size_t next_idx  = cfg->node_list.len + 1;
 
-  cfg_populate_node(cfg, block_node, do_ast);
+  ControlFlowGraphNode* block_node = cfgn_create(cfg, block_idx);
+  ControlFlowGraphNode* next_node  = cfgn_create(cfg, scope_no);
+
+  cfg_populate_node(cfg, block_node, do_ast, block_idx);
   return next_idx;
 }
 
 
-size_t cfg_handle_while(ControlFlowGraph* cfg, AST* while_ast)
+size_t cfg_handle_while(ControlFlowGraph* cfg, AST* while_ast, size_t scope_no)
 {
   NULL_CHECK(cfg, cfg_handle_while)
 
@@ -186,13 +194,13 @@ size_t cfg_handle_while(ControlFlowGraph* cfg, AST* while_ast)
     die("error: cfg_handle_while: expected WHILE stmt\n");
   }
 
-  ControlFlowGraphNode* cond_node = cfgn_create(cfg);
-  ControlFlowGraphNode* loop_node = cfgn_create(cfg);
-  ControlFlowGraphNode* next_node = cfgn_create(cfg);
-
   const size_t cond_idx = cfg->node_list.len;
   const size_t loop_idx = cfg->node_list.len + 1;
   const size_t next_idx = cfg->node_list.len + 2;
+
+  ControlFlowGraphNode* cond_node = cfgn_create(cfg, scope_no);
+  ControlFlowGraphNode* loop_node = cfgn_create(cfg, loop_idx);
+  ControlFlowGraphNode* next_node = cfgn_create(cfg, scope_no);
 
   if (ast_get_num_children(while_ast) < 2) {
     die("error: cfg_handle_while: too few children in WHILE stmt AST\n");
@@ -201,7 +209,7 @@ size_t cfg_handle_while(ControlFlowGraph* cfg, AST* while_ast)
   cfg_add_node(cfg, cond_node);
   cond_node->stmts.values[0] = ast_get_child(while_ast, 0);
   cond_node->stmts.len = 1;
-  cfg_populate_node(cfg, loop_node, ast_get_child(while_ast, 1));
+  cfg_populate_node(cfg, loop_node, ast_get_child(while_ast, 1), loop_idx);
   cfg_add_node(cfg, next_node);
 
   cfgn_add_connection(cond_node, loop_idx);
@@ -226,13 +234,25 @@ string* cfg_to_string(Arena* context, ControlFlowGraph* c)
   return ret;
 }
 
-ControlFlowGraphNode* cfgn_create(ControlFlowGraph* c) {
+ControlFlowGraphNode* cfg_get_node(ControlFlowGraph* c, size_t node_no)
+{
+  return c->node_list.values[node_no];
+}
+
+size_t cfg_get_len(ControlFlowGraph* c)
+{
+  return c->node_list.len;
+}
+
+ControlFlowGraphNode* cfgn_create(ControlFlowGraph* c, size_t scope_no) {
   NULL_CHECK(c, cfgn_create)
 
   ControlFlowGraphNode* out = arena_alloc(c->memory, sizeof(ControlFlowGraphNode));
   out->parent = c;
   vector_object_init(c->memory, (vector_object*) out);
   vector_size_t_init(c->memory, &out->connection_list);
+  out->environment = c->environment;
+  out->scope_no = scope_no;
   out->generated = 0;
   return out;
 }
@@ -262,11 +282,11 @@ string* cfgn_to_string(Arena* context, ControlFlowGraphNode* n, size_t index)
 {
   Arena* local = arena_create();
 
-  char node_header_chars[n->connection_list.len * 21 + 9];
+  char node_header_chars[n->connection_list.len * 21 + 1000];
   char* node_header_ptr = node_header_chars;
   string* ret;
 
-  node_header_ptr += sprintf(node_header_chars, "%lu => {", index);
+  node_header_ptr += sprintf(node_header_chars, "%lu (scope: %lu, environment: %s) => {", index, n->scope_no, n->environment);
   if (n->connection_list.len == 0) strcat(node_header_ptr, "EOF}:\n");
   for (int conn = 0; conn < n->connection_list.len; conn++)
   {

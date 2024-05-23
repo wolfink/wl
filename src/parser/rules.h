@@ -523,7 +523,7 @@ END_RULE
 
 // pointer decl:  *var
 // pointer deref: *var or var*?
-// VAR: ID | STAR <VAR> | COLON <TYPE> | PERIOD <VAR>
+// VAR: ID (COLON <TYPE> | PERIOD <VAR>) | STAR <VAR>
 RULE_IMPL(VAR)
   if (NEXT_TOKEN == TokenType_ID) SCAN_ADD(ID);
   else if (NEXT_TOKEN == TokenType_STAR) ROOT_APPEND(RULE(VAR));

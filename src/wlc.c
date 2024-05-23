@@ -6,6 +6,7 @@
 #include <gen.h>
 #include <lexer.h>
 #include <defs.h>
+#include <environment_manager.h>
 
 #define SHOW_LEXER  1
 #define SHOW_VALUES 1 << 1
@@ -81,6 +82,9 @@ int main(int argc, char** argv)
     arena_free(b);
   }
 
+  environment_manager_init();
+  environment_manager_create_environment(u_strnew(a, "public"));
+
   ControlFlowGraph* c = cfg_create(a);
   cfg_scan_ast(c, ast);
   if (flags & SHOW_PARSER) {
@@ -92,7 +96,7 @@ int main(int argc, char** argv)
     arena_free(b);
   }
 
-  Generator* g = generator_create(a, "a.s");
+  Generator* g = generator_create(a, "a.s", c);
   generate(g);
 
   arena_free(a);

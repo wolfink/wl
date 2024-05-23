@@ -17,6 +17,17 @@
 // EXPR_AND       : &&
 // EXPR_OR        : ||
 // ASSIGN         : =, :=, +=, -=, *=, /=, etc.
+#define ExprRules\
+  X(EXPR_OR, "EXPR_OR") \
+  X(EXPR_AND, "EXPR_AND") \
+  X(EXPR_BW_OR, "EXPR_BW_OR") \
+  X(EXPR_BW_AND, "EXPR_BW_AND") \
+  X(EXPR_EQ, "EXPR_EQ") \
+  X(EXPR_REL, "EXPR_REL") \
+  X(EXPR_SUM, "EXPR_SUM") \
+  X(EXPR_MUL, "EXPR_MUL") \
+  X(EXPR_UNARY, "EXPR_UNARY") \
+
 #define StdRules \
   X(ASSIGN, "ASSIGN") \
   X(BLOCK, "BLOCK") \
@@ -30,15 +41,6 @@
   X(ELSE, "ELSE") \
   X(ENV, "ENV") \
   X(EXPR, "EXPR") \
-  X(EXPR_OR, "EXPR_OR") \
-  X(EXPR_AND, "EXPR_AND") \
-  X(EXPR_BW_OR, "EXPR_BW_OR") \
-  X(EXPR_BW_AND, "EXPR_BW_AND") \
-  X(EXPR_EQ, "EXPR_EQ") \
-  X(EXPR_REL, "EXPR_REL") \
-  X(EXPR_SUM, "EXPR_SUM") \
-  X(EXPR_MUL, "EXPR_MUL") \
-  X(EXPR_UNARY, "EXPR_UNARY") \
   X(FACTOR, "FACTOR") \
   X(FLOAT, "FLOAT") \
   X(FUNCTION_TYPE, "FUNCTION_TYPE") \
@@ -70,6 +72,7 @@
   X(UNARY, "UNARY") \
   X(VAR, "VAR")\
   X(WHILE, "WHILE") \
+  ExprRules
 
 #define Rules \
   StdRules \

@@ -32,7 +32,7 @@ string*  u_strnnew(Arena* context, const char* src, size_t num_chars)
 {
   NULL_CHECK(src, u_strnnew)
 
-  size_t len = max(sizeof(src), num_chars);
+  size_t len = 0; while (len < num_chars && src[len] != '\0') len++;
   size_t* size_ptr = arena_alloc(context, sizeof(size_t) + len);
   string* ret = STR_PTR(size_ptr);
   memcpy(ret, src, len);

@@ -8,11 +8,16 @@ typedef string* string_ptr;
 typedef Variable* Variable_ptr;
 
 int string_compare(string* a, string* b) { return u_strcmp(a, b) == 0; }
-hash_map_template(string_ptr, Variable_ptr);
-hash_map_impl(string_ptr, Variable_ptr, u_string_hash, string_compare);
+hash_map_template(string_ptr, Variable_ptr)
+hash_map_impl(string_ptr, Variable_ptr, u_string_hash, string_compare)
+
+hash_map_template(string_ptr, size_t)
+hash_map_impl(string_ptr, size_t, u_string_hash, string_compare)
 
 typedef struct {
   HashMap(string_ptr, Variable_ptr)* variables;
+  // HashMap(string_ptr, size_t)* scopes;
+  size_t location;
 } Environment;
 
 typedef Environment* Environment_ptr;
@@ -35,6 +40,7 @@ void environment_manager_create_environment(string* name)
 {
   Environment* e = arena_alloc(MEMORY, sizeof(Environment));
   e->variables = hash_map_create(string_ptr, Variable_ptr)(MEMORY, 1024);
+  e->location = 0;
   hash_map_add(string_ptr, Environment_ptr)(&ENVIRONMENT_MANAGER, name, e);
 }
 
@@ -53,21 +59,15 @@ string* type_ast_to_signature(AST* type)
   return u_strnew(MEMORY, "type");
 }
 
-void environment_add_variable(string* env_name, AST* var)
+void environment_add_variable(string* env_name, string* var_name, string* type_signature)
 {
-  if (var->type != ASTType_VAR) {
-    die(ANSI_COLOR_RED "error: " ANSI_COLOR_RESET "environment_add_variable: AST is not VAR type!\n");
-  }
   Environment* e = get_environment(env_name);
   Variable* v = arena_alloc(MEMORY, sizeof(Variable));
-  AST* identifier = var->children[0];
-  if (identifier->type != ASTType_TOKEN) {
-    die(ANSI_COLOR_RED "error: " ANSI_COLOR_RESET "environment_add_variable: AST is malformed!\n");
-  }
-  AST* type = var->children[1];
-  v->type_signature = type_ast_to_signature(type);
-  const Token* t = lexer_get_token(var->lexer, var->token_line, var->token_idx);
-  hash_map_add(string_ptr, Variable_ptr)(e->variables, u_strcpyar(MEMORY, t->value), v);
+  v->type_signature = u_strcpyar(MEMORY, type_signature);
+  v->location = e->location;
+  // const Token* t = lexer_get_token(var->lexer, var->token_line, var->token_idx);
+  hash_map_add(string_ptr, Variable_ptr)(e->variables, u_strcpyar(MEMORY, var_name), v);
+  e->location += 8;
 }
 
 Variable* environment_get_variable(string* env_name, string* var_name)

@@ -3,10 +3,11 @@
 
 #include <util/arena.h>
 #include <parser.h>
+#include <cfg.h>
 
 typedef struct {} Generator;
 
-Generator* generator_create(Arena*, const char* filename);
-void       generate(Generator*);
+extern Generator* generator_create(Arena*, const char* filename, ControlFlowGraph*);
+extern void       generate(Generator*);
 
 #endif

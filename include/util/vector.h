@@ -17,6 +17,7 @@
   void vector_##type##_init(Arena* arena, vector_##type* v);\
   void vector_##type##_resize(vector_##type* vector);\
   void vector_##type##_add(vector_##type* vector, type value);\
+  type vector_##type##_pop(vector_##type* vector);\
 
 #define vector_impl(type, default_size)\
   vector_##type* vector_##type##_create(Arena* arena)\
@@ -45,6 +46,13 @@
   {\
     vector_##type##_resize(vector);\
     vector->values[vector->len++] = value;\
+  }\
+  type vector_##type##_pop(vector_##type* vector)\
+  {\
+    if (vector->len == 0) {\
+      die(ANSI_COLOR_RED "error: " ANSI_COLOR_RESET "vector_" #type "_pop: attempt to pop empty array!\n");\
+    }\
+    return vector->values[--vector->len];\
   }\
 
 #define vector_init(type) vector_##type##_init
